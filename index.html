@@ -782,10 +782,13 @@
         </div>
         <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
         <div class="dropdown-item disabled">
-            <span class="icon">📌</span> 版本 v2.1.1
+            <span class="icon">📌</span> 版本 v1.0.2
         </div>
         <div class="dropdown-item disabled" id="storageInfo">
             <span class="icon">💾</span> 占用 <span id="storageSize">计算中...</span>
+        </div>
+        <div class="dropdown-item" onclick="window.open('https://github.com/wufa995/workweb', '_blank')">
+            <span class="icon">👤</span> 最新版本
         </div>
         <div class="dropdown-divider"></div>
         <div class="dropdown-item" id="menuCalendar" onclick="toggleWidget('calendarFloatWindow')">
