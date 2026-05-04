@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日历</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            padding: 1vw;
+            font-family: 'Microsoft YaHei', sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            align-items: center;
+        }
+
+        .table {
+            width: 95%;
+            max-width: 1400px;
+            min-width: 500px;
+            flex: 1;
+            border-collapse: collapse;
+            border: 2px solid rgba(255,255,255,0.3);
+            table-layout: fixed;
+        }
+
+        .table td {
+            border: 1px solid rgba(255,255,255,0.3);
+            text-align: center;
+            vertical-align: top;
+            cursor: pointer;
+            position: relative;
+            width: 120px;
+            min-width: 120px;
+            max-width: 120px;
+            color: rgba(255,255,255,0.9);
+            padding: 0;
+            overflow: hidden;
+            height: 100px;
+        }
+
+        .day-info {
+            font-size: calc(10px + 0.5vw);
+            font-weight: bold;
+            margin-bottom: 0.3vw;
+            color: rgba(255,255,255,0.9);
+        }
+
+        .event-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+
+        .event-content {
+            font-size: calc(8px + 0.4vw);
+            padding: 0.3vw 0.5vw;
+            border-radius: 0;
+            word-break: break-all;
+            background-color: #4a9eff;
+            color: #1a1a1a;
+            text-align: center;
+            width: 100%;
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .event-content.single {
+            background-color: #666;
+            color: #fff;
+        }
+
+        .event-content:hover {
+            opacity: 0.8;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: rgba(30, 30, 30, 0.95);
+            padding: 2vw;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px;
+            min-width: 280px;
+            color: rgba(255,255,255,0.9);
+        }
+
+        .modal h3 {
+            margin-bottom: 1.5vw;
+            font-size: calc(16px + 0.5vw);
+            color: rgba(255,255,255,0.9);
+        }
+
+        .modal label {
+            display: block;
+            margin-bottom: 0.5vw;
+            font-weight: bold;
+            font-size: calc(12px + 0.3vw);
+            color: rgba(255,255,255,0.8);
+        }
+
+        .modal input[type="text"],
+        .modal input[type="date"] {
+            width: 100%;
+            padding: 0.8vw;
+            margin-bottom: 1.5vw;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 4px;
+            font-size: 14px;
+            background: rgba(0,0,0,0.5);
+            color: rgba(255,255,255,0.9);
+        }
+
+        .modal button {
+            padding: 0.8vw 1.6vw;
+            margin-right: 1vw;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: calc(12px + 0.3vw);
+        }
+
+        .modal .btn-confirm {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        .modal .btn-cancel {
+            background: rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.7);
+        }
+
+        .modal .btn-delete {
+            background: rgba(255,100,100,0.3);
+            color: rgba(255,200,200,0.9);
+        }
+
+        .context-menu {
+            position: fixed;
+            background: rgba(30, 30, 30, 0.95);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 4px;
+            padding: 0.5vw 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 2000;
+            min-width: 120px;
+            color: rgba(255,255,255,0.9);
+        }
+
+        .context-menu.show {
+            display: block;
+        }
+
+        .context-menu li {
+            list-style: none;
+            padding: 0.8vw 1.5vw;
+            cursor: pointer;
+            font-size: calc(12px + 0.3vw);
+            white-space: nowrap;
+            color: rgba(255,255,255,0.9);
+        }
+
+        .context-menu li:hover {
+            background: rgba(255,255,255,0.1);
+        }
+    </style>
+</head>
+<body>
+    <table class="table" id="calendarTable">
+        <tbody id="tableBody">
+        </tbody>
+    </table>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <h3>添加日程</h3>
+            <label>内容</label>
+            <input type="text" id="contentInput" placeholder="请输入日程内容">
+            <label>结束日期</label>
+            <input type="date" id="endDateInput">
+            <button class="btn-confirm" onclick="saveEvent()">确认</button>
+            <button class="btn-cancel" onclick="closeModal()">取消</button>
+        </div>
+    </div>
+
+    <ul class="context-menu" id="contextMenu">
+    </ul>
+
+    <script>
+        var events = [];
+        var currentDate = null;
+        var contextDate = null;
+
+        var weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+        
+        function getDisplayDate() {
+            var urlParams = new URLSearchParams(window.location.search);
+            var dayParam = urlParams.get('day');
+            
+            if (dayParam && dayParam.length === 8) {
+                var year = parseInt(dayParam.substring(0, 4));
+                var month = parseInt(dayParam.substring(4, 6)) - 1;
+                var day = parseInt(dayParam.substring(6, 8));
+                
+                if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
+                    var date = new Date(year, month, day);
+                    if (date.getFullYear() === year && date.getMonth() === month && date.getDate() === day) {
+                        return date;
+                    }
+                }
+            }
+            
+            return new Date();
+        }
+
+        function loadEvents() {
+            var saved = localStorage.getItem('calendarEvents');
+            if (saved) {
+                try {
+                    var loaded = JSON.parse(saved);
+                    events = [];
+                    for (var i = 0; i < loaded.length; i++) {
+                        if (loaded[i].date) {
+                            events.push(loaded[i]);
+                        } else if (loaded[i].startDate) {
+                            var startDate = new Date(loaded[i].startDate);
+                            var endDate = new Date(loaded[i].endDate);
+                            while (startDate <= endDate) {
+                                events.push({
+                                    date: formatDate(startDate),
+                                    content: loaded[i].content
+                                });
+                                startDate.setDate(startDate.getDate() + 1);
+                            }
+                        }
+                    }
+                    saveEvents();
+                } catch (e) {
+                    events = [];
+                }
+            }
+        }
+
+        function saveEvents() {
+            localStorage.setItem('calendarEvents', JSON.stringify(events));
+        }
+
+        function getEventsForDate(dateStr) {
+            var result = [];
+            for (var i = 0; i < events.length; i++) {
+                if (events[i].date === dateStr) {
+                    result.push({index: i, ...events[i]});
+                }
+            }
+            return result;
+        }
+
+        function formatDate(date) {
+            var year = date.getFullYear();
+            var month = String(date.getMonth() + 1).padStart(2, '0');
+            var day = String(date.getDate()).padStart(2, '0');
+            return year + '-' + month + '-' + day;
+        }
+
+        function hasNeighborEvent(content, dateStr) {
+            var current = new Date(dateStr);
+            
+            var prevDate = new Date(current);
+            prevDate.setDate(current.getDate() - 1);
+            var prevEvents = getEventsForDate(formatDate(prevDate));
+            for (var i = 0; i < prevEvents.length; i++) {
+                if (prevEvents[i].content === content) {
+                    return true;
+                }
+            }
+            
+            var nextDate = new Date(current);
+            nextDate.setDate(current.getDate() + 1);
+            var nextEvents = getEventsForDate(formatDate(nextDate));
+            for (var i = 0; i < nextEvents.length; i++) {
+                if (nextEvents[i].content === content) {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+
+        function getMaxTrackCount() {
+            var today = getDisplayDate();
+            var todayDayOfWeek = today.getDay();
+            var mondayOffset = todayDayOfWeek === 0 ? 6 : todayDayOfWeek - 1;
+            var firstDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() - mondayOffset - 7);
+            
+            var maxCount = 0;
+            for (var i = 0; i < 21; i++) {
+                var d = new Date(firstDay);
+                d.setDate(firstDay.getDate() + i);
+                var dayEvents = getEventsForDate(formatDate(d));
+                maxCount = Math.max(maxCount, dayEvents.length);
+            }
+            return maxCount;
+        }
+
+        function getContentOrder() {
+            var today = getDisplayDate();
+            var todayDayOfWeek = today.getDay();
+            var mondayOffset = todayDayOfWeek === 0 ? 6 : todayDayOfWeek - 1;
+            var firstDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() - mondayOffset - 7);
+            
+            var contentOrder = {};
+            var trackCounter = 0;
+            var assignedContents = new Set();
+            
+            for (var i = 0; i < 21; i++) {
+                var d = new Date(firstDay);
+                d.setDate(firstDay.getDate() + i);
+                var dateStr = formatDate(d);
+                var dayEvents = getEventsForDate(dateStr);
+                
+                var nextDate = new Date(d);
+                nextDate.setDate(d.getDate() + 1);
+                var nextEvents = getEventsForDate(formatDate(nextDate));
+                var nextContents = new Set();
+                for (var k = 0; k < nextEvents.length; k++) {
+                    nextContents.add(nextEvents[k].content);
+                }
+                
+                for (var j = 0; j < dayEvents.length; j++) {
+                    var content = dayEvents[j].content;
+                    
+                    if (!(content in contentOrder)) {
+                        var prevDate = new Date(d);
+                        prevDate.setDate(d.getDate() - 1);
+                        var prevEvents = getEventsForDate(formatDate(prevDate));
+                        
+                        for (var k = 0; k < prevEvents.length; k++) {
+                            if (prevEvents[k].content === content && prevEvents[k].content in contentOrder) {
+                                contentOrder[content] = contentOrder[prevEvents[k].content];
+                                assignedContents.add(content);
+                                break;
+                            }
+                        }
+                        
+                        if (!(content in contentOrder)) {
+                            if (nextContents.has(content)) {
+                                contentOrder[content] = trackCounter++;
+                                assignedContents.add(content);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            for (var i = 0; i < 21; i++) {
+                var d = new Date(firstDay);
+                d.setDate(firstDay.getDate() + i);
+                var dateStr = formatDate(d);
+                var dayEvents = getEventsForDate(dateStr);
+                
+                for (var j = 0; j < dayEvents.length; j++) {
+                    var content = dayEvents[j].content;
+                    
+                    if (!(content in contentOrder)) {
+                        contentOrder[content] = trackCounter++;
+                    }
+                }
+            }
+            
+            return contentOrder;
+        }
+
+        function render() {
+            var today = getDisplayDate();
+            var todayDayOfWeek = today.getDay();
+            var mondayOffset = todayDayOfWeek === 0 ? 6 : todayDayOfWeek - 1;
+
+            var tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            var firstDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() - mondayOffset - 7);
+            
+            var contentOrder = getContentOrder();
+            var maxTrack = Object.keys(contentOrder).length;
+
+            var rows = '';
+            for (var i = 0; i < 3; i++) {
+                rows += '<tr>';
+                for (var j = 0; j < 7; j++) {
+                    var currentDay = new Date(firstDay);
+                    currentDay.setDate(firstDay.getDate() + i * 7 + j);
+                    
+                    var dateStr = formatDate(currentDay);
+                    var dayEvents = getEventsForDate(dateStr);
+                    
+                    var cellClass = '';
+                    
+                    var weekDay = weekDays[currentDay.getDay()];
+                    var isDisplayDate = formatDate(currentDay) === formatDate(today);
+                    var dayInfoStyle = isDisplayDate ? ' style="color: red; font-weight: bold;"' : '';
+                    var month = String(currentDay.getMonth() + 1).padStart(2, '0');
+                    var day = String(currentDay.getDate()).padStart(2, '0');
+                    var dayInfo = '<span' + dayInfoStyle + '>' + month + '月' + day + '日(' + weekDay + ')</span>';
+                    
+                    var eventHtml = '<div class="event-container">';
+                    
+                    for (var track = 0; track < maxTrack; track++) {
+                        var foundEvent = null;
+                        for (var m = 0; m < dayEvents.length; m++) {
+                            if (contentOrder[dayEvents[m].content] === track) {
+                                foundEvent = dayEvents[m];
+                                break;
+                            }
+                        }
+                        
+                        if (foundEvent) {
+                            var hasNeighbor = hasNeighborEvent(foundEvent.content, dateStr);
+                            var eventClass = hasNeighbor ? '' : ' single';
+                            eventHtml += '<div class="event-content' + eventClass + '" onclick="event.stopPropagation(); showContextMenuForEvent(event, ' + foundEvent.index + ')">' + foundEvent.content + '</div>';
+                        }
+                    }
+                    
+                    eventHtml += '</div>';
+                    
+                    rows += '<td class="' + cellClass + '" onclick="showModal(\'' + dateStr + '\')" oncontextmenu="showContextMenu(event, \'' + dateStr + '\')"><div class="day-info">' + dayInfo + '</div>' + eventHtml + '</td>';
+                }
+                rows += '</tr>';
+            }
+
+            tbody.innerHTML = rows;
+        }
+
+        function showModal(dateStr) {
+            currentDate = dateStr;
+            document.getElementById('contentInput').value = '';
+            document.getElementById('endDateInput').value = dateStr;
+            document.getElementById('modalOverlay').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('show');
+            currentDate = null;
+        }
+
+        function saveEvent() {
+            var content = document.getElementById('contentInput').value;
+            var endDate = document.getElementById('endDateInput').value;
+
+            if (!content.trim()) {
+                alert('请输入日程内容');
+                return;
+            }
+
+            var startDate = new Date(currentDate);
+            var endDateObj = new Date(endDate);
+
+            while (startDate <= endDateObj) {
+                var dateStr = formatDate(startDate);
+                events.push({
+                    date: dateStr,
+                    content: content.trim()
+                });
+                startDate.setDate(startDate.getDate() + 1);
+            }
+
+            saveEvents();
+            closeModal();
+            render();
+        }
+
+        function showContextMenu(event, dateStr) {
+            event.preventDefault();
+            contextDate = dateStr;
+            
+            var dayEvents = getEventsForDate(dateStr);
+            var menu = document.getElementById('contextMenu');
+            menu.innerHTML = '';
+            
+            if (dayEvents.length === 0) {
+                var li = document.createElement('li');
+                li.textContent = '无日程可删除';
+                li.style.color = '#999';
+                li.style.cursor = 'default';
+                menu.appendChild(li);
+            } else {
+                var contentSet = new Set();
+                var uniqueEvents = [];
+                for (var i = 0; i < dayEvents.length; i++) {
+                    if (!contentSet.has(dayEvents[i].content)) {
+                        contentSet.add(dayEvents[i].content);
+                        uniqueEvents.push(dayEvents[i]);
+                    }
+                }
+                
+                for (var i = 0; i < uniqueEvents.length; i++) {
+                    var li = document.createElement('li');
+                    li.textContent = '删除 ' + uniqueEvents[i].content;
+                    li.setAttribute('data-content', uniqueEvents[i].content);
+                    li.onclick = deleteEventsByContentAndDate;
+                    menu.appendChild(li);
+                }
+            }
+            
+            menu.style.left = Math.min(event.clientX, window.innerWidth - menu.offsetWidth - 10) + 'px';
+            menu.style.top = Math.min(event.clientY, window.innerHeight - menu.offsetHeight - 10) + 'px';
+            menu.classList.add('show');
+
+            document.addEventListener('click', hideContextMenu);
+        }
+
+        function showContextMenuForEvent(event, index) {
+            event.preventDefault();
+            var menu = document.getElementById('contextMenu');
+            menu.innerHTML = '';
+            
+            var li = document.createElement('li');
+            li.textContent = '删除 ' + events[index].content;
+            li.setAttribute('data-index', index);
+            li.onclick = deleteSingleEvent;
+            menu.appendChild(li);
+            
+            menu.style.left = Math.min(event.clientX, window.innerWidth - menu.offsetWidth - 10) + 'px';
+            menu.style.top = Math.min(event.clientY, window.innerHeight - menu.offsetHeight - 10) + 'px';
+            menu.classList.add('show');
+
+            document.addEventListener('click', hideContextMenu);
+        }
+
+        function deleteEventsByContentAndDate(e) {
+            var content = e.target.getAttribute('data-content');
+            if (content && contextDate) {
+                for (var i = events.length - 1; i >= 0; i--) {
+                    if (events[i].date === contextDate && events[i].content === content) {
+                        events.splice(i, 1);
+                        break;
+                    }
+                }
+                saveEvents();
+                render();
+            }
+            hideContextMenu();
+        }
+
+        function deleteSingleEvent(e) {
+            var index = parseInt(e.target.getAttribute('data-index'));
+            if (!isNaN(index)) {
+                events.splice(index, 1);
+                saveEvents();
+                render();
+            }
+            hideContextMenu();
+        }
+
+        function hideContextMenu() {
+            document.getElementById('contextMenu').classList.remove('show');
+            contextDate = null;
+            document.removeEventListener('click', hideContextMenu);
+        }
+
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal-overlay')) {
+                closeModal();
+            }
+        });
+
+        loadEvents();
+        render();
+    </script>
+</body>
+</html>

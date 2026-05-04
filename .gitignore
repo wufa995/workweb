@@ -1,0 +1,14 @@
+# 忽略备份文件
+index copy*.html
+
+# 忽略编辑器配置
+.vscode/
+.idea/
+
+# 忽略临时文件
+*.tmp
+*.log
+
+# 忽略操作系统文件
+.DS_Store
+Thumbs.db

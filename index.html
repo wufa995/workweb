@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>工作台</title>
+        <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+        <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background-image: url('bg.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            min-height: 100vh;
+            padding: 10px;
+            position: relative;
+        }
+
+        .input-section {
+            position: fixed;
+            right: 10px;
+            bottom: 10px;
+            display: flex;
+            gap: 8px;
+            background: #f5f5f5;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            z-index: 100;
+        }
+
+        input {
+            width: 100px;
+            padding: 6px 8px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 13px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #4a90d9;
+        }
+
+        button {
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 13px;
+            cursor: pointer;
+            background: white;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: #f0f0f0;
+        }
+
+        .edit-toggle-btn.active {
+            background: #4a90d9;
+            color: white;
+            border-color: #4a90d9;
+        }
+
+        .list-container {
+            width: 100%;
+            column-count: 3;
+            column-fill: auto;
+            column-gap: 15px;
+        }
+
+        .list-item {
+            display: flex;
+            align-items: center;
+            padding: 6px 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            color: #fff;
+            gap: 12px;
+            position: relative;
+            break-inside: avoid;
+            background: rgba(0,0,0,0.4);
+            margin-bottom: 2px;
+            border-radius: 4px;
+        }
+
+        .list-item:hover {
+            background: rgba(0,0,0,0.6);
+        }
+
+        .rank {
+            width: 28px;
+            text-align: center;
+            font-size: 14px;
+            color: rgba(255,255,255,0.7);
+            font-weight: 500;
+        }
+
+        .tag {
+            min-width: 50px;
+            font-size: 12px;
+            color: rgba(255,255,255,0.7);
+            padding-right: 10px;
+        }
+
+        .name {
+            flex: 1;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            font-size: 18px;
+            color: #fff;
+            text-align: center;
+            font-family: 'Ma Shan Zheng', cursive;
+        }
+
+        .watermark {
+            position: absolute;
+            left: 10px;
+            font-size: 13px;
+            color: rgba(100, 100, 100, 0.7);
+            pointer-events: none;
+            font-style: italic;
+        }
+
+        .date {
+            font-size: 12px;
+            color: rgba(255,255,255,0.7);
+            min-width: 45px;
+            text-align: right;
+        }
+
+        .count {
+            font-size: 12px;
+            color: #4a90d9;
+            font-weight: 500;
+            min-width: 45px;
+            text-align: right;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: rgba(255,255,255,0.7);
+            padding: 50px;
+            font-size: 14px;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 320px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .modal h2 {
+            margin-bottom: 15px;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .modal .input-row {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .modal input {
+            width: 100%;
+        }
+
+        .readonly-info {
+            display: flex;
+            align-items: center;
+            padding: 8px 15px;
+            color: #888;
+            font-size: 13px;
+            border-top: 1px solid #eee;
+        }
+
+        .readonly-info .label {
+            font-weight: 500;
+            margin-right: 5px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 10px;
+        }
+
+        .modal-actions button {
+            padding: 8px 15px;
+        }
+
+        .modal .save-btn {
+            background: #4a90d9;
+            color: white;
+            border-color: #4a90d9;
+        }
+
+        .modal .cancel-btn {
+            background: #f0f0f0;
+        }
+
+        .modal .delete-btn {
+            background: #e74c3c;
+            color: white;
+            border-color: #e74c3c;
+        }
+
+        .copy-success {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            z-index: 300;
+            display: none;
+        }
+
+        .copy-success.show {
+            display: block;
+        }
+
+        .preview-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 2000;
+            max-width: 800px;
+            max-height: 600px;
+            overflow: hidden;
+            display: none;
+        }
+
+        .preview-popup.show {
+            display: block;
+        }
+
+        .preview-popup img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .preview-popup .close-preview {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            font-size: 18px;
+            line-height: 1;
+            z-index: 10;
+        }
+
+        .preview-popup .close-preview:hover {
+            background: rgba(0,0,0,0.8);
+        }
+
+        .preview-popup .preview-title {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px;
+            font-size: 14px;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .weather-widget {
+            position: fixed;
+            right: 10px;
+            bottom: 10px;
+            width: 150px;
+            min-width: 120px;
+            min-height: 100px;
+            background: rgba(0, 0, 0, 0.85);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            z-index: 1001;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .widget-header {
+            background: linear-gradient(135deg, #333 0%, #222 100%);
+            height: 32px;
+            cursor: move;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 12px;
+            position: relative;
+        }
+
+        .widget-header .drag-indicator {
+            width: 40px;
+            height: 4px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 2px;
+        }
+
+        .widget-header .close-btn {
+            position: absolute;
+            right: 8px;
+            width: 20px;
+            height: 20px;
+            line-height: 18px;
+            text-align: center;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            cursor: pointer;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .weather-widget:hover .widget-header .close-btn {
+            opacity: 1;
+        }
+
+        .widget-header .close-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .weather-content {
+            padding: 10px;
+            height: calc(100% - 32px);
+            color: rgba(255,255,255,0.9);
+            text-align: center;
+        }
+
+        .city-input {
+            width: 100%;
+            padding: 6px 8px;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-bottom: 8px;
+            text-align: center;
+            background: rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.9);
+        }
+
+        .city-input:focus {
+            outline: none;
+            background: rgba(255,255,255,0.15);
+        }
+
+        .city-input::placeholder {
+            color: rgba(255,255,255,0.4);
+        }
+
+        .weather-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .weather-icon {
+            font-size: 28px;
+        }
+
+        .weather-temp {
+            font-size: 20px;
+            font-weight: bold;
+            color: rgba(255,255,255,0.9);
+        }
+
+        .weather-location {
+            font-size: 11px;
+            margin-top: 4px;
+            color: rgba(255,255,255,0.6);
+        }
+
+        .sticky-note {
+            position: fixed;
+            right: 10px;
+            top: 70px;
+            width: 220px;
+            height: 170px;
+            min-width: 150px;
+            min-height: 100px;
+            background: rgba(0, 0, 0, 0.85);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            z-index: 1002;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sticky-header {
+            background: linear-gradient(135deg, #333 0%, #222 100%);
+            height: 32px;
+            cursor: move;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 12px;
+            position: relative;
+        }
+
+        .sticky-header .drag-indicator {
+            width: 40px;
+            height: 4px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 2px;
+        }
+
+        .sticky-header .close-btn {
+            position: absolute;
+            right: 8px;
+            width: 20px;
+            height: 20px;
+            line-height: 18px;
+            text-align: center;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            cursor: pointer;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .sticky-note:hover .sticky-header .close-btn {
+            opacity: 1;
+        }
+
+        .sticky-header .close-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .sticky-content {
+            padding: 10px;
+            height: calc(100% - 32px);
+            background: rgba(0, 0, 0, 0.85);
+        }
+
+        .sticky-content textarea {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: transparent;
+            resize: none;
+            font-family: 'Microsoft YaHei', sans-serif;
+            font-size: 14px;
+            color: rgba(255,255,255,0.9);
+            line-height: 1.6;
+            padding: 4px;
+        }
+
+        .sticky-content textarea:focus {
+            outline: none;
+        }
+
+        .sticky-content textarea::placeholder {
+            color: rgba(255,255,255,0.4);
+        }
+
+        .float-window {
+            position: fixed;
+            background: rgba(0, 0, 0, 0.85);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            z-index: 1000;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+            min-width: 200px;
+            min-height: 150px;
+            display: none;
+        }
+
+        #numWidget.show {
+            display: block;
+        }
+
+        .float-window-header {
+            background: linear-gradient(135deg, #333 0%, #222 100%);
+            height: 32px;
+            cursor: move;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 12px;
+        }
+
+        .float-window-header .drag-indicator {
+            width: 40px;
+            height: 4px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 2px;
+        }
+
+        .float-window-header .close-btn {
+            position: absolute;
+            right: 8px;
+            width: 20px;
+            height: 20px;
+            line-height: 18px;
+            text-align: center;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            cursor: pointer;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .float-window:hover .float-window-header .close-btn {
+            opacity: 1;
+        }
+
+        .float-window-header .close-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .float-window-content {
+            width: 100%;
+            height: calc(100% - 32px);
+        }
+
+        .float-window-content iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .resize-handle {
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            width: 16px;
+            height: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: se-resize;
+            border-radius: 0 0 8px 0;
+        }
+
+        .resize-handle::after {
+            content: '';
+            position: absolute;
+            right: 4px;
+            bottom: 4px;
+            width: 8px;
+            height: 8px;
+            border-right: 2px solid white;
+            border-bottom: 2px solid white;
+        }
+
+        .resize-handle-vertical {
+            display: none;
+        }
+
+        .resize-handle-horizontal {
+            display: none;
+        }
+        .menu-btn {
+            position: fixed;
+            right: 10px;
+            bottom: 10px;
+            width: 44px;
+            height: 44px;
+            background: rgba(0, 0, 0, 0.85);
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: rgba(255,255,255,0.8);
+            transition: all 0.3s;
+        }
+
+        .menu-btn:hover {
+            transform: scale(1.1);
+            background: rgba(50, 50, 50, 0.9);
+        }
+
+        .dropdown-menu {
+            position: fixed;
+            right: 60px;
+            bottom: 60px;
+            background: rgba(0, 0, 0, 0.9);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            min-width: 160px;
+            overflow: hidden;
+            z-index: 9998;
+            display: none;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: rgba(255,255,255,0.8);
+            transition: background 0.2s;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .dropdown-item.disabled {
+            cursor: default;
+            color: rgba(255,255,255,0.4);
+        }
+
+        .dropdown-item.disabled:hover {
+            background: transparent;
+        }
+
+        .dropdown-item .icon {
+            font-size: 16px;
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.1);
+            margin: 4px 0;
+        }
+
+        .dropdown-item.collapsed {
+            color: rgba(255,255,255,0.4);
+        }
+
+        .dropdown-item.collapsed::before {
+            content: '▶ ';
+            font-size: 10px;
+            color: rgba(255,255,255,0.3);
+        }
+
+        .dropdown-item.expanded::before {
+            content: '▼ ';
+            font-size: 10px;
+            color: rgba(255,255,255,0.6);
+        }
+    </style>
+</head>
+<body>
+    <div class="list-container" id="listContainer">
+    </div>
+
+
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <h2>编辑链接</h2>
+            <div class="input-row">
+                <input type="text" id="editName" placeholder="文字">
+                <input type="text" id="editUrl" placeholder="网址">
+                <input type="text" id="editTag" placeholder="标签">
+            </div>
+            <div class="readonly-info">
+                <span class="label">点击次数：</span>
+                <span id="editCount">0次</span>
+            </div>
+            <div class="readonly-info">
+                <span class="label">最后打开：</span>
+                <span id="editDate">-</span>
+            </div>
+            <div class="modal-actions">
+                <button class="delete-btn" onclick="confirmDelete()">删除</button>
+                <button class="cancel-btn" onclick="closeModal()">取消</button>
+                <button class="save-btn" onclick="saveEdit()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="addModalOverlay">
+        <div class="modal">
+            <h2>添加链接</h2>
+            <div class="input-row">
+                <input type="text" id="addName" placeholder="文字">
+                <input type="text" id="addUrl" placeholder="网址">
+                <input type="text" id="addTag" placeholder="标签" value="默认">
+            </div>
+            <div class="modal-actions">
+                <button class="cancel-btn" onclick="closeAddModal()">取消</button>
+                <button class="save-btn" onclick="confirmAdd()">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="copy-success" id="copySuccess">已复制!</div>
+
+    <div class="preview-popup" id="previewPopup">
+        <button class="close-preview" onclick="closePreview()">×</button>
+        <img id="previewImage" src="" alt="网页预览">
+        <div class="preview-title" id="previewTitle"></div>
+    </div>
+
+    <div class="weather-widget" id="weatherWidget">
+        <div class="widget-header" id="weatherHeader">
+            <span class="drag-indicator"></span>
+            <span class="close-btn" onclick="toggleWidget('weatherWidget')">×</span>
+        </div>
+        <div class="weather-content">
+            <input type="text" id="cityInput" class="city-input" placeholder="输入城市" value="">
+            <div class="weather-info" onclick="searchWeather()">
+                <span class="weather-icon" id="weatherIcon">☀️</span>
+                <span class="weather-temp" id="weatherTemp">--°</span>
+            </div>
+            <div class="weather-location" id="weatherLocation" onclick="searchWeather()">输入城市后回车</div>
+        </div>
+        <div class="resize-handle" id="weatherResizeHandle"></div>
+    </div>
+
+    <button class="menu-btn" id="menuBtn" onclick="toggleMenu()">☰</button>
+
+    <div class="dropdown-menu" id="dropdownMenu">
+        <div class="dropdown-item" onclick="exportData()">
+            <span class="icon">📤</span> 导出数据
+        </div>
+        <div class="dropdown-item" onclick="document.getElementById('importFile').click()">
+            <span class="icon">📥</span> 导入数据
+        </div>
+        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+        <div class="dropdown-item disabled">
+            <span class="icon">📌</span> 版本 v1.0.0
+        </div>
+        <div class="dropdown-divider"></div>
+        <div class="dropdown-item" id="menuCalendar" onclick="toggleWidget('calendarFloatWindow')">
+            <span class="icon">📅</span> 日历
+        </div>
+        <div class="dropdown-item" id="menuWeather" onclick="toggleWidget('weatherWidget')">
+            <span class="icon">🌤️</span> 天气
+        </div>
+        <div class="dropdown-item" id="menuSticky" onclick="toggleWidget('stickyNote')">
+            <span class="icon">📝</span> 备忘录
+        </div>
+        <div class="dropdown-item" id="menuNum" onclick="toggleWidget('numWidget')">
+            <span class="icon">📄</span> 记事本
+        </div>
+    </div>
+
+    <div class="sticky-note" id="stickyNote">
+        <div class="sticky-header" id="stickyHeader">
+            <span class="drag-indicator"></span>
+            <span class="close-btn" onclick="toggleWidget('stickyNote')">×</span>
+        </div>
+        <div class="sticky-content">
+            <textarea id="memoText" placeholder="在这里写备忘录..."></textarea>
+        </div>
+        <div class="resize-handle" id="stickyResizeHandle"></div>
+    </div>
+
+    <div class="float-window" id="numWidget">
+        <div class="float-window-header" id="numWidgetHeader">
+            <span class="drag-indicator"></span>
+            <span class="close-btn" onclick="toggleWidget('numWidget')">×</span>
+        </div>
+        <div class="float-window-content">
+            <iframe src="num.html" frameborder="0"></iframe>
+        </div>
+        <div class="resize-handle" id="numWidgetResizeHandle"></div>
+    </div>
+
+    <div class="float-window" id="calendarFloatWindow">
+        <div class="float-window-header" id="floatWindowHeader">
+            <span class="drag-indicator"></span>
+            <span class="close-btn" onclick="toggleFloatWindow()">×</span>
+        </div>
+        <div class="float-window-content">
+            <iframe src="day.html" frameborder="0"></iframe>
+        </div>
+        <div class="resize-handle" id="resizeHandle"></div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'link_notes';
+        let links = [];
+        let editingIndex = -1;
+        let editMode = false;
+
+        function loadLinks() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                links = JSON.parse(saved);
+            } else {
+                links = [];
+            }
+            sortLinks();
+            renderLinks();
+            fetchWeather();
+        }
+
+        function getWeatherIcon(code) {
+            const weatherIcons = {
+                113: '☀️', 116: '⛅', 119: '☁️', 122: '☁️',
+                143: '�️', 176: '🌦️', 179: '🌨️', 182: '🌨️',
+                185: '🌨️', 200: '⛈️', 227: '🌨️', 230: '❄️',
+                248: '🌫️', 260: '🌫️', 263: '🌧️', 266: '🌧️',
+                281: '🌧️', 284: '🌧️', 293: '🌧️', 296: '🌧️',
+                299: '🌧️', 302: '🌧️', 305: '🌧️', 308: '🌧️',
+                311: '🌧️', 314: '🌧️', 317: '🌧️', 320: '🌨️',
+                323: '🌨️', 326: '🌨️', 329: '🌨️', 332: '🌨️',
+                335: '🌨️', 338: '🌨️', 350: '🌨️', 353: '🌨️',
+                356: '🌧️', 359: '🌧️', 362: '🌧️', 365: '🌧️',
+                368: '🌦️', 371: '🌨️', 374: '�️', 377: '�️',
+                386: '⛈️', 389: '⛈️', 392: '⛈️', 395: '⛈️'
+            };
+            return weatherIcons[code] || '🌈';
+        }
+
+        function fetchWeatherByCity(city) {
+            if (!city) return;
+
+            document.getElementById('weatherLocation').textContent = city;
+            document.getElementById('weatherTemp').textContent = '加载中...';
+            document.getElementById('weatherIcon').textContent = '⏳';
+
+            fetch(`https://wttr.in/${encodeURIComponent(city)}?format=j1`)
+                .then(response => response.json())
+                .then(data => {
+                    const current = data.current_condition[0];
+                    const temp = current.temp_C;
+                    const code = parseInt(current.weatherCode);
+
+                    document.getElementById('weatherTemp').textContent = temp + '°';
+                    document.getElementById('weatherIcon').textContent = getWeatherIcon(code);
+                })
+                .catch(error => {
+                    console.log('获取天气失败:', error);
+                    document.getElementById('weatherLocation').textContent = city;
+                    document.getElementById('weatherTemp').textContent = '--°';
+                    document.getElementById('weatherIcon').textContent = '❓';
+                });
+        }
+
+        function fetchWeather() {
+            const savedCity = localStorage.getItem('weather_city');
+            if (savedCity) {
+                document.getElementById('cityInput').value = savedCity;
+                fetchWeatherByCity(savedCity);
+            }
+        }
+
+        function searchWeather() {
+            const city = document.getElementById('cityInput').value.trim() || localStorage.getItem('weather_city') || '北京';
+            window.open('https://www.baidu.com/s?wd=' + encodeURIComponent(city + '天气'), '_blank');
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const cityInput = document.getElementById('cityInput');
+            cityInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    const city = cityInput.value.trim();
+                    if (city) {
+                        localStorage.setItem('weather_city', city);
+                        fetchWeatherByCity(city);
+                    }
+                }
+            });
+
+            const memoText = document.getElementById('memoText');
+            const savedMemo = localStorage.getItem('memo_text');
+            if (savedMemo) {
+                memoText.value = savedMemo;
+            }
+            memoText.addEventListener('input', function() {
+                localStorage.setItem('memo_text', memoText.value);
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.addEventListener('contextmenu', function(event) {
+                const target = event.target;
+                if (target.classList.contains('list-container') || 
+                    target.classList.contains('empty-state') ||
+                    target.tagName === 'BODY') {
+                    event.preventDefault();
+                    openAddModal();
+                }
+            });
+        });
+
+        function saveLinks() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(links));
+        }
+
+        function sortLinks() {
+            links.sort((a, b) => {
+                const countA = a.count || 0;
+                const countB = b.count || 0;
+                if (countB !== countA) {
+                    return countB - countA;
+                }
+                const dateA = a.lastOpenDate || '';
+                const dateB = b.lastOpenDate || '';
+                return dateB.localeCompare(dateA);
+            });
+        }
+
+        function getMedalIcon(index) {
+            return '';
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            return `${month}-${day}`;
+        }
+
+        function formatFullDate(dateStr) {
+            if (!dateStr) return '-';
+            const date = new Date(dateStr);
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function getDomain(url) {
+            try {
+                return new URL(url).hostname;
+            } catch {
+                return url;
+            }
+        }
+
+        const tagColors = [
+            'rgba(74, 144, 217, 0.3)',
+            'rgba(103, 194, 57, 0.3)',
+            'rgba(241, 196, 15, 0.3)',
+            'rgba(231, 76, 60, 0.3)',
+            'rgba(155, 89, 182, 0.3)',
+            'rgba(52, 152, 219, 0.3)',
+            'rgba(46, 204, 113, 0.3)',
+            'rgba(230, 126, 34, 0.3)',
+            'rgba(149, 165, 166, 0.3)',
+            'rgba(243, 156, 18, 0.3)'
+        ];
+
+        function getTagColor(tag) {
+            if (!tag) return 'rgba(150, 150, 150, 0.3)';
+            let hash = 0;
+            for (let i = 0; i < tag.length; i++) {
+                hash = tag.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            return tagColors[Math.abs(hash) % tagColors.length];
+        }
+
+        function renderLinks() {
+            const container = document.getElementById('listContainer');
+            
+            if (links.length === 0) {
+                container.innerHTML = '<div class="empty-state">暂无数据</div>';
+                return;
+            }
+
+            container.innerHTML = links.map((link, index) => {
+                return `
+                    <div class="list-item" onclick="handleClick(${index})" oncontextmenu="return handleRightClick(event, ${index})">
+                        <span class="rank">${index + 1}</span>
+                        <span class="tag">${link.tag || ''}</span>
+                        <span class="name">${link.name}</span>
+                        <span class="date">${formatDate(link.lastOpenDate) || ''}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function handleClick(index) {
+            const link = links[index];
+            if (editMode) {
+                openEditModal(index);
+            } else {
+                link.count = (link.count || 0) + 1;
+                link.lastOpenDate = new Date().toISOString();
+                saveLinks();
+                sortLinks();
+                renderLinks();
+                window.open(link.url, '_blank');
+            }
+        }
+
+        function handleRightClick(event, index) {
+            event.preventDefault();
+            openEditModal(index);
+            return false;
+        }
+
+        function exportData() {
+            const data = {
+                version: 2,
+                exportDate: new Date().toISOString(),
+                links: links,
+                weather_city: localStorage.getItem('weather_city') || '',
+                memoText: localStorage.getItem('memoText') || '',
+                floatWindowConfig: JSON.parse(localStorage.getItem('calendarFloatWindowConfig') || 'null'),
+                weatherWidgetConfig: JSON.parse(localStorage.getItem('weatherWidgetConfig') || 'null'),
+                stickyNoteConfig: JSON.parse(localStorage.getItem('stickyNoteConfig') || 'null'),
+                calendarEvents: JSON.parse(localStorage.getItem('calendarEvents') || 'null'),
+                numWidgetConfig: JSON.parse(localStorage.getItem('numWidgetConfig') || 'null')
+            };
+            const jsonStr = JSON.stringify(data, null, 2);
+            const blob = new Blob([jsonStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'link-notes-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    let importCount = 0;
+
+                    if (data.links && Array.isArray(data.links)) {
+                        links = data.links;
+                        saveLinks();
+                        sortLinks();
+                        renderLinks();
+                        importCount += links.length;
+                    }
+                    if (data.weather_city) {
+                        localStorage.setItem('weather_city', data.weather_city);
+                        document.getElementById('cityInput').value = data.weather_city;
+                        fetchWeatherByCity(data.weather_city);
+                    }
+                    if (data.memoText !== undefined) {
+                        localStorage.setItem('memoText', data.memoText);
+                        document.getElementById('memoText').value = data.memoText;
+                    }
+                    if (data.floatWindowConfig) {
+                        localStorage.setItem('calendarFloatWindowConfig', JSON.stringify(data.floatWindowConfig));
+                    }
+                    if (data.weatherWidgetConfig) {
+                        localStorage.setItem('weatherWidgetConfig', JSON.stringify(data.weatherWidgetConfig));
+                    }
+                    if (data.stickyNoteConfig) {
+                        localStorage.setItem('stickyNoteConfig', JSON.stringify(data.stickyNoteConfig));
+                    }
+                    if (data.calendarEvents) {
+                        localStorage.setItem('calendarEvents', JSON.stringify(data.calendarEvents));
+                    }
+                    if (data.numWidgetConfig) {
+                        localStorage.setItem('numWidgetConfig', JSON.stringify(data.numWidgetConfig));
+                    }
+
+                    alert('导入成功！共 ' + importCount + ' 条链接数据');
+                    setTimeout(() => location.reload(), 100);
+                } catch (error) {
+                    alert('导入失败：文件格式不正确');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function openAddModal() {
+            document.getElementById('addName').value = '';
+            document.getElementById('addUrl').value = '';
+            document.getElementById('addTag').value = '默认';
+            document.getElementById('addModalOverlay').classList.add('show');
+        }
+
+        function closeAddModal() {
+            document.getElementById('addModalOverlay').classList.remove('show');
+        }
+
+        function confirmAdd() {
+            const name = document.getElementById('addName').value.trim();
+            const url = document.getElementById('addUrl').value.trim();
+            const tag = document.getElementById('addTag').value.trim() || '默认';
+
+            if (!name || !url) {
+                alert('请填写文字和网址');
+                return;
+            }
+
+            links.push({ 
+                name, 
+                url, 
+                tag,
+                count: 0, 
+                lastOpenDate: new Date().toISOString()
+            });
+            saveLinks();
+            sortLinks();
+            renderLinks();
+            closeAddModal();
+        }
+
+        function deleteLink(index) {
+            links.splice(index, 1);
+            saveLinks();
+            sortLinks();
+            renderLinks();
+            closeModal();
+        }
+
+        function confirmDelete() {
+            if (confirm('确定删除？')) {
+                deleteLink(editingIndex);
+            }
+        }
+
+        function openEditModal(index) {
+            editingIndex = index;
+            const link = links[index];
+            document.getElementById('editName').value = link.name;
+            document.getElementById('editUrl').value = link.url;
+            document.getElementById('editTag').value = link.tag || '';
+            document.getElementById('editCount').textContent = (link.count || 0) + '次';
+            document.getElementById('editDate').textContent = link.lastOpenDate ? formatFullDate(link.lastOpenDate) : '-';
+            document.getElementById('modalOverlay').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('show');
+            editingIndex = -1;
+        }
+
+        function saveEdit() {
+            if (editingIndex < 0) return;
+
+            const name = document.getElementById('editName').value.trim();
+            const url = document.getElementById('editUrl').value.trim();
+            const tag = document.getElementById('editTag').value.trim();
+
+            if (!name || !url) {
+                alert('请填写文字和网址');
+                return;
+            }
+
+            links[editingIndex].name = name;
+            links[editingIndex].url = url;
+            links[editingIndex].tag = tag;
+            saveLinks();
+            sortLinks();
+            renderLinks();
+            closeModal();
+        }
+
+        function toggleEditMode() {
+            editMode = !editMode;
+            const btn = document.getElementById('editToggleBtn');
+            btn.classList.toggle('active');
+        }
+
+        document.addEventListener('DOMContentLoaded', loadLinks);
+
+        let isDragging = false;
+        let isResizing = false;
+        let resizeType = '';
+        let currentWidgetId = '';
+        let startX, startY;
+        let startWidth, startHeight;
+        let startLeft, startTop;
+
+        function initFloatWindows() {
+            initWidget('calendarFloatWindow', {
+                defaultLeft: '10px',
+                defaultTop: window.innerHeight - 300 + 'px',
+                defaultWidth: '400px',
+                defaultHeight: '280px',
+                minWidth: 200,
+                minHeight: 150,
+                headerId: 'floatWindowHeader',
+                resizeHandleId: 'resizeHandle'
+            });
+
+            initWidget('weatherWidget', {
+                defaultLeft: '10px',
+                defaultTop: window.innerHeight - 150 + 'px',
+                defaultWidth: '150px',
+                defaultHeight: '120px',
+                minWidth: 120,
+                minHeight: 100,
+                headerId: 'weatherHeader',
+                resizeHandleId: 'weatherResizeHandle'
+            });
+
+            initWidget('stickyNote', {
+                defaultLeft: window.innerWidth - 230 + 'px',
+                defaultTop: '70px',
+                defaultWidth: '220px',
+                defaultHeight: '170px',
+                minWidth: 150,
+                minHeight: 100,
+                headerId: 'stickyHeader',
+                resizeHandleId: 'stickyResizeHandle'
+            });
+
+            initWidget('numWidget', {
+                defaultLeft: window.innerWidth - 350 + 'px',
+                defaultTop: '70px',
+                defaultWidth: '340px',
+                defaultHeight: '400px',
+                minWidth: 200,
+                minHeight: 150,
+                headerId: 'numWidgetHeader',
+                resizeHandleId: 'numWidgetResizeHandle'
+            });
+        }
+
+        function initWidget(widgetId, config) {
+            const widget = document.getElementById(widgetId);
+            const savedConfig = localStorage.getItem(widgetId + 'Config');
+            
+            if (savedConfig) {
+                try {
+                    const saved = JSON.parse(savedConfig);
+                    widget.style.left = saved.left + 'px';
+                    widget.style.top = saved.top + 'px';
+                    widget.style.width = saved.width + 'px';
+                    widget.style.height = saved.height + 'px';
+                } catch (e) {
+                    setDefaultWidgetPosition(widget, config);
+                }
+            } else {
+                setDefaultWidgetPosition(widget, config);
+            }
+
+            const savedVisible = localStorage.getItem(widgetId + 'Visible');
+            if (savedVisible === 'true' || savedVisible === null) {
+                if (widgetId === 'numWidget') {
+                    widget.classList.add('show');
+                } else {
+                    widget.style.display = 'block';
+                }
+            }
+
+            const header = document.getElementById(config.headerId);
+            const resizeHandle = document.getElementById(config.resizeHandleId);
+
+            header.addEventListener('mousedown', (e) => {
+                bringToFront(widgetId);
+                startDrag(e, widgetId);
+            });
+            resizeHandle.addEventListener('mousedown', (e) => {
+                bringToFront(widgetId);
+                startResize(e, 'both', widgetId);
+            });
+        }
+
+        let topZIndex = 1010;
+        function bringToFront(widgetId) {
+            const widget = document.getElementById(widgetId);
+            topZIndex += 1;
+            widget.style.zIndex = topZIndex;
+        }
+
+        function setDefaultWidgetPosition(widget, config) {
+            widget.style.left = config.defaultLeft;
+            widget.style.top = config.defaultTop;
+            widget.style.width = config.defaultWidth;
+            widget.style.height = config.defaultHeight;
+        }
+
+        function startDrag(e, widgetId) {
+            isDragging = true;
+            currentWidgetId = widgetId;
+            const widget = document.getElementById(widgetId);
+            startX = e.clientX - parseInt(widget.style.left) || e.clientX - widget.offsetLeft;
+            startY = e.clientY - parseInt(widget.style.top) || e.clientY - widget.offsetTop;
+            e.preventDefault();
+        }
+
+        function startResize(e, type, widgetId) {
+            isResizing = true;
+            resizeType = type;
+            currentWidgetId = widgetId;
+            const widget = document.getElementById(widgetId);
+            
+            startX = e.clientX;
+            startY = e.clientY;
+            startWidth = widget.offsetWidth;
+            startHeight = widget.offsetHeight;
+            startLeft = parseInt(widget.style.left) || widget.offsetLeft;
+            startTop = parseInt(widget.style.top) || widget.offsetTop;
+            
+            e.preventDefault();
+        }
+
+        let rafId = null;
+        function handleMove(e) {
+            if (!isDragging && !isResizing) return;
+
+            if (rafId) return;
+            rafId = requestAnimationFrame(() => {
+                rafId = null;
+                const widget = document.getElementById(currentWidgetId);
+                if (!widget) return;
+
+                if (isDragging) {
+                    let newLeft = e.clientX - startX;
+                    let newTop = e.clientY - startY;
+
+                    newLeft = Math.max(0, Math.min(newLeft, window.innerWidth - widget.offsetWidth));
+                    newTop = Math.max(0, Math.min(newTop, window.innerHeight - widget.offsetHeight));
+
+                    widget.style.left = newLeft + 'px';
+                    widget.style.top = newTop + 'px';
+                }
+
+                if (isResizing) {
+                    const deltaX = e.clientX - startX;
+                    const deltaY = e.clientY - startY;
+
+                    let newWidth = startWidth;
+                    let newHeight = startHeight;
+                    let minWidth = 200;
+                    let minHeight = 150;
+
+                    if (currentWidgetId === 'weatherWidget') {
+                        minWidth = 120;
+                        minHeight = 100;
+                    } else if (currentWidgetId === 'stickyNote') {
+                        minWidth = 150;
+                        minHeight = 100;
+                    }
+
+                    if (resizeType === 'both' || resizeType === 'horizontal') {
+                        newWidth = Math.max(minWidth, Math.min(startWidth + deltaX, window.innerWidth - startLeft - 10));
+                    }
+
+                    if (resizeType === 'both' || resizeType === 'vertical') {
+                        newHeight = Math.max(minHeight, Math.min(startHeight + deltaY, window.innerHeight - startTop - 10));
+                    }
+
+                    widget.style.width = newWidth + 'px';
+                    widget.style.height = newHeight + 'px';
+                }
+            });
+        }
+
+        function stopDragOrResize() {
+            if (rafId) {
+                cancelAnimationFrame(rafId);
+                rafId = null;
+            }
+            if (isDragging || isResizing) {
+                saveWidgetConfig(currentWidgetId);
+            }
+            isDragging = false;
+            isResizing = false;
+            resizeType = '';
+            currentWidgetId = '';
+        }
+
+        function saveWidgetConfig(widgetId) {
+            const widget = document.getElementById(widgetId);
+            const config = {
+                left: parseInt(widget.style.left) || widget.offsetLeft,
+                top: parseInt(widget.style.top) || widget.offsetTop,
+                width: widget.offsetWidth,
+                height: widget.offsetHeight
+            };
+            localStorage.setItem(widgetId + 'Config', JSON.stringify(config));
+        }
+
+        function toggleWidget(widgetId) {
+            const widget = document.getElementById(widgetId);
+            let willShow = false;
+            
+            if (widgetId === 'numWidget') {
+                willShow = !widget.classList.contains('show');
+                widget.classList.toggle('show');
+                localStorage.setItem('numWidgetVisible', widget.classList.contains('show'));
+            } else {
+                willShow = widget.style.display === 'none';
+                widget.style.display = willShow ? 'block' : 'none';
+                localStorage.setItem(widgetId + 'Visible', willShow);
+            }
+            
+            if (willShow) {
+                bringToFront(widgetId);
+            }
+            
+            updateMenuState();
+        }
+
+        function toggleMenu() {
+            const menu = document.getElementById('dropdownMenu');
+            menu.classList.toggle('show');
+        }
+
+        function updateMenuState() {
+            const widgets = [
+                { id: 'calendarFloatWindow', menuId: 'menuCalendar', name: '日历', icon: '📅' },
+                { id: 'weatherWidget', menuId: 'menuWeather', name: '天气', icon: '🌤️' },
+                { id: 'stickyNote', menuId: 'menuSticky', name: '备忘录', icon: '📝' },
+                { id: 'numWidget', menuId: 'menuNum', name: '记事本', icon: '📄', useClass: true }
+            ];
+
+            widgets.forEach(w => {
+                const widget = document.getElementById(w.id);
+                const menuItem = document.getElementById(w.menuId);
+                let isHidden;
+                if (w.useClass) {
+                    isHidden = !widget.classList.contains('show');
+                } else {
+                    isHidden = widget.style.display === 'none';
+                }
+
+                if (isHidden) {
+                    menuItem.className = 'dropdown-item collapsed';
+                    menuItem.innerHTML = '<span class="icon">' + w.icon + '</span> 展开 ' + w.name;
+                } else {
+                    menuItem.className = 'dropdown-item expanded';
+                    menuItem.innerHTML = '<span class="icon">' + w.icon + '</span> 折叠 ' + w.name;
+                }
+            });
+        }
+
+        document.addEventListener('mousemove', handleMove);
+        document.addEventListener('mouseup', stopDragOrResize);
+        document.addEventListener('DOMContentLoaded', initFloatWindows);
+        document.addEventListener('DOMContentLoaded', updateMenuState);
+
+        document.addEventListener('click', function(e) {
+            const menu = document.getElementById('dropdownMenu');
+            const menuBtn = document.getElementById('menuBtn');
+            if (!menu.contains(e.target) && !menuBtn.contains(e.target)) {
+                menu.classList.remove('show');
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'q') {
+                e.preventDefault();
+                toggleWidget('numWidget');
+            }
+        });
+    </script>
+</body>
+</html>
