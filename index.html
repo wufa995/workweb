@@ -782,7 +782,13 @@
         </div>
         <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
         <div class="dropdown-item disabled">
-            <span class="icon">📌</span> 版本 v1.0.0
+            <span class="icon">📌</span> 版本 v1.0.1
+        </div>
+        <div class="dropdown-item disabled" id="storageInfo">
+            <span class="icon">💾</span> 占用 <span id="storageSize">计算中...</span>
+        </div>
+        <div class="dropdown-item" onclick="window.open('https://github.com/wufa995/workweb', '_blank')">
+            <span class="icon">👤</span> 最新版本
         </div>
         <div class="dropdown-divider"></div>
         <div class="dropdown-item" id="menuCalendar" onclick="toggleWidget('calendarFloatWindow')">
@@ -904,6 +910,24 @@
         function searchWeather() {
             const city = document.getElementById('cityInput').value.trim() || localStorage.getItem('weather_city') || '北京';
             window.open('https://www.baidu.com/s?wd=' + encodeURIComponent(city + '天气'), '_blank');
+        }
+
+        function calculateStorageSize() {
+            let total = 0;
+            for (let key in localStorage) {
+                if (localStorage.hasOwnProperty(key)) {
+                    total += localStorage[key].length + key.length;
+                }
+            }
+            let sizeText = '';
+            if (total < 1024) {
+                sizeText = total + ' B';
+            } else if (total < 1024 * 1024) {
+                sizeText = (total / 1024).toFixed(1) + ' KB';
+            } else {
+                sizeText = (total / (1024 * 1024)).toFixed(1) + ' MB';
+            }
+            document.getElementById('storageSize').textContent = sizeText;
         }
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -1484,6 +1508,7 @@
         document.addEventListener('mouseup', stopDragOrResize);
         document.addEventListener('DOMContentLoaded', initFloatWindows);
         document.addEventListener('DOMContentLoaded', updateMenuState);
+        document.addEventListener('DOMContentLoaded', calculateStorageSize);
 
         document.addEventListener('click', function(e) {
             const menu = document.getElementById('dropdownMenu');
