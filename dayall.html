@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>所有日程</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📅</text></svg>">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background-color: #1a1a1a;
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #4a9eff;
+        }
+        .list {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .item {
+            display: flex;
+            padding: 10px 15px;
+            border-bottom: 1px solid #333;
+        }
+        .item:hover {
+            background-color: #2a2a2a;
+        }
+        .date {
+            width: 120px;
+            color: #4a9eff;
+            flex-shrink: 0;
+        }
+        .content {
+            flex: 1;
+            word-break: break-all;
+        }
+        .empty {
+            text-align: center;
+            color: #666;
+            padding: 40px;
+        }
+        .back {
+            display: inline-block;
+            margin-bottom: 15px;
+            color: #4a9eff;
+            text-decoration: none;
+        }
+        .back:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back">← 返回主页</a>
+    <h1>📅 所有日程</h1>
+    <div class="list" id="list"></div>
+
+    <script>
+        function formatDate(dateStr) {
+            var d = new Date(dateStr);
+            return d.getFullYear() + '-' +
+                String(d.getMonth() + 1).padStart(2, '0') + '-' +
+                String(d.getDate()).padStart(2, '0');
+        }
+
+        function loadAllEvents() {
+            var list = document.getElementById('list');
+            var stored = localStorage.getItem('calendarEvents');
+
+            if (!stored) {
+                list.innerHTML = '<div class="empty">暂无日程记录</div>';
+                return;
+            }
+
+            var events = JSON.parse(stored);
+            var allEvents = [];
+
+            for (var i = 0; i < events.length; i++) {
+                if (events[i].date) {
+                    allEvents.push(events[i]);
+                } else if (events[i].startDate) {
+                    var startDate = new Date(events[i].startDate);
+                    var endDate = new Date(events[i].endDate);
+                    var current = new Date(startDate);
+
+                    while (current <= endDate) {
+                        allEvents.push({
+                            date: formatDate(current),
+                            content: events[i].content
+                        });
+                        current.setDate(current.getDate() + 1);
+                    }
+                }
+            }
+
+            allEvents.sort(function(a, b) {
+                return new Date(b.date) - new Date(a.date);
+            });
+
+            if (allEvents.length === 0) {
+                list.innerHTML = '<div class="empty">暂无日程记录</div>';
+                return;
+            }
+
+            var html = '';
+            for (var j = 0; j < allEvents.length; j++) {
+                html += '<div class="item">' +
+                    '<span class="date">' + allEvents[j].date + '</span>' +
+                    '<span class="content">' + allEvents[j].content + '</span>' +
+                    '</div>';
+            }
+            list.innerHTML = html;
+        }
+
+        loadAllEvents();
+    </script>
+</body>
+</html>
