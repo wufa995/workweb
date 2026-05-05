@@ -240,6 +240,9 @@
             var todayStr = today.getFullYear() + '年' + String(today.getMonth() + 1).padStart(2, '0') + '月' + String(today.getDate()).padStart(2, '0') + '日';
             link.download = currentYear + '一整年的日记（' + todayStr + '）.txt';
             
+            var timeStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0') + ' ' + String(today.getHours()).padStart(2, '0') + ':' + String(today.getMinutes()).padStart(2, '0') + ':' + String(today.getSeconds()).padStart(2, '0');
+            localStorage.setItem('lastExportTime', timeStr);
+            
             link.href = URL.createObjectURL(blob);
             link.click();
         }
