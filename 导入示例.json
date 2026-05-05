@@ -1,0 +1,48 @@
+{
+  "version": 2,
+  "exportDate": "2026-05-05T04:50:48.617Z",
+  "links": [
+    {
+      "name": "示例1-闲鱼",
+      "url": "https://www.goofish.com/",
+      "tag": "示例1-购物",
+      "count": 12,
+      "lastOpenDate": "2026-05-05T01:28:14.538Z"
+    },
+    {
+      "name": "示例2-哔哩哔哩",
+      "url": "https://www.bilibili.com/",
+      "tag": "示例2-电视",
+      "count": 11,
+      "lastOpenDate": "2026-05-04T11:13:51.383Z"
+    }
+  ],
+  "weather_city": "请在此输入你的地址",
+  "memoText": "Ctrl+q快速启动",
+  "floatWindowConfig": {
+    "left": 510,
+    "top": 6,
+    "width": 852,
+    "height": 349
+  },
+  "weatherWidgetConfig": {
+    "left": 1198,
+    "top": 513,
+    "width": 161,
+    "height": 149
+  },
+  "stickyNoteConfig": {
+    "left": 504,
+    "top": 397,
+    "width": 207,
+    "height": 148
+  },
+  "calendarEvents": [
+  ],
+  "numWidgetConfig": {
+    "left": 678,
+    "top": 39,
+    "width": 681,
+    "height": 615
+  }
+}
