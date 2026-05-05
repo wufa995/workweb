@@ -3,6 +3,13 @@
   "exportDate": "2026-05-05T04:50:48.617Z",
   "links": [
     {
+      "name": "全部日记",
+      "url": "./dayall.html",
+      "tag": "系统",
+      "count": 999,
+      "lastOpenDate": "2026-05-05T01:28:14.538Z"
+    },
+    {
       "name": "示例1-闲鱼",
       "url": "https://www.goofish.com/",
       "tag": "示例1-购物",
