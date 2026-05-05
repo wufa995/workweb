@@ -45,19 +45,6 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            border: none;
-        }
-        .border-left {
-            border-left: 1px solid #ffd700;
-        }
-        .border-right {
-            border-right: 1px solid #ffd700;
-        }
-        .border-top {
-            border-top: 1px solid #ffd700;
-        }
-        .border-bottom {
-            border-bottom: 1px solid #ffd700;
         }
         .day-date {
             font-size: 10px;
@@ -170,9 +157,6 @@
             var currentDate = new Date(startDate);
             var endDate = new Date(year, 11, 31);
 
-            var monthStartPositions = [];
-            var monthStartBelowPositions = [];
-            
             while (currentDate <= endDate) {
                 var dateStr = formatDate(currentDate);
                 var events = dateEvents[dateStr] || [];
@@ -186,35 +170,6 @@
                 var cellClass = 'day-cell';
                 if (isEmpty) cellClass += ' empty-day';
                 
-                var isFirstDayOfMonth = currentDate.getDate() === 1;
-                var isLastDayOfYear = currentDate.getMonth() === 11 && currentDate.getDate() === 31;
-                var dayOfWeek = currentDate.getDay();
-                var isSunday = dayOfWeek === 0;
-                var isMonday = dayOfWeek === 1;
-                
-                if (isFirstDayOfMonth) {
-                    cellClass += ' border-left border-top';
-                    var totalDays = Math.floor((currentDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000));
-                    var rowIndex = Math.floor(totalDays / 7);
-                    var colIndex = totalDays % 7;
-                    monthStartPositions.push({ row: rowIndex, col: colIndex });
-                    
-                    if (colIndex > 0) {
-                        monthStartBelowPositions.push({ row: rowIndex, startCol: 0, endCol: colIndex - 1 });
-                    }
-                }
-                if (isSunday || isLastDayOfYear) {
-                    cellClass += ' border-right';
-                }
-                if (isMonday && !isFirstDayOfMonth) {
-                    cellClass += ' border-left';
-                }
-                
-                var daysRemaining = Math.floor((endDate.getTime() - currentDate.getTime()) / (24 * 60 * 60 * 1000));
-                if (daysRemaining >= 0 && daysRemaining <= 6) {
-                    cellClass += ' border-bottom';
-                }
-                
                 var dateClass = isToday ? 'day-date today' : 'day-date';
                 html += '<div class="' + cellClass + '">';
                 html += '<div class="' + dateClass + '">' + month + '/' + day + '</div>';
@@ -226,28 +181,6 @@
             }
 
             grid.innerHTML = html;
-            
-            var cells = grid.querySelectorAll('.day-cell');
-            cells.forEach(function(cell, index) {
-                var rowIndex = Math.floor(index / 7);
-                var colIndex = index % 7;
-                
-                for (var i = 0; i < monthStartPositions.length; i++) {
-                    var pos = monthStartPositions[i];
-                    if (rowIndex === pos.row && colIndex >= pos.col) {
-                        cell.classList.add('border-top');
-                        break;
-                    }
-                }
-                
-                for (var i = 0; i < monthStartBelowPositions.length; i++) {
-                    var pos = monthStartBelowPositions[i];
-                    if (rowIndex === pos.row && colIndex >= pos.startCol && colIndex <= pos.endCol) {
-                        cell.classList.add('border-bottom');
-                        break;
-                    }
-                }
-            });
         }
 
         function switchYear(year) {
