@@ -56,6 +56,9 @@
         .border-top {
             border-top: 1px solid #ffd700;
         }
+        .border-bottom {
+            border-bottom: 1px solid #ffd700;
+        }
         .day-date {
             font-size: 10px;
             color: #4a9eff;
@@ -168,6 +171,7 @@
             var endDate = new Date(year, 11, 31);
 
             var monthStartPositions = [];
+            var monthStartBelowPositions = [];
             
             while (currentDate <= endDate) {
                 var dateStr = formatDate(currentDate);
@@ -193,6 +197,10 @@
                     var rowIndex = Math.floor(totalDays / 7);
                     var colIndex = totalDays % 7;
                     monthStartPositions.push({ row: rowIndex, col: colIndex });
+                    
+                    if (colIndex > 0) {
+                        monthStartBelowPositions.push({ row: rowIndex, startCol: 0, endCol: colIndex - 1 });
+                    }
                 }
                 if (isSunday) {
                     cellClass += ' border-right';
@@ -222,6 +230,14 @@
                     var pos = monthStartPositions[i];
                     if (rowIndex === pos.row && colIndex >= pos.col) {
                         cell.classList.add('border-top');
+                        break;
+                    }
+                }
+                
+                for (var i = 0; i < monthStartBelowPositions.length; i++) {
+                    var pos = monthStartBelowPositions[i];
+                    if (rowIndex === pos.row && colIndex >= pos.startCol && colIndex <= pos.endCol) {
+                        cell.classList.add('border-bottom');
                         break;
                     }
                 }
