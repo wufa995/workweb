@@ -780,14 +780,11 @@
             <span class="icon">📤</span> 导出数据 <span id="exportSize" style="color: #666; font-size: 10px;">(计算中...)</span>
         </div>
         <div class="dropdown-item" onclick="document.getElementById('importFile').click()">
-            <span class="icon">📥</span> 导入数据
+            <span class="icon">📥</span> 导入数据 <a id="lastExportLink" style="color: #4a9eff; font-size: 12px;" href="#" onclick="openLastExport(); return false;"><span id="lastExportTime">从未导出</span></a>
         </div>
         <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
         <div class="dropdown-item disabled">
             <span class="icon">📌</span> 版本 v1.4.11 <a href="#" style="color: #4a9eff;" onclick="window.open('https://github.com/wufa995/workweb', '_blank'); return false;">workweb.git</a>
-        </div>
-        <div class="dropdown-item disabled" id="lastExportInfo">
-            <span class="icon">📤</span> 最后导出 <a id="lastExportLink" style="color: #4a9eff;" href="#" onclick="openLastExport(); return false;"><span id="lastExportTime">从未导出</span></a>
         </div>
         <div class="dropdown-divider"></div>
         <div class="dropdown-item" id="menuCalendar" onclick="toggleWidget('calendarFloatWindow')">
