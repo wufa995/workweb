@@ -187,6 +187,7 @@
                 if (isEmpty) cellClass += ' empty-day';
                 
                 var isFirstDayOfMonth = currentDate.getDate() === 1;
+                var isLastDayOfYear = currentDate.getMonth() === 11 && currentDate.getDate() === 31;
                 var dayOfWeek = currentDate.getDay();
                 var isSunday = dayOfWeek === 0;
                 var isMonday = dayOfWeek === 1;
@@ -202,11 +203,16 @@
                         monthStartBelowPositions.push({ row: rowIndex, startCol: 0, endCol: colIndex - 1 });
                     }
                 }
-                if (isSunday) {
+                if (isSunday || isLastDayOfYear) {
                     cellClass += ' border-right';
                 }
                 if (isMonday && !isFirstDayOfMonth) {
                     cellClass += ' border-left';
+                }
+                
+                var daysRemaining = Math.floor((endDate.getTime() - currentDate.getTime()) / (24 * 60 * 60 * 1000));
+                if (daysRemaining >= 0 && daysRemaining <= 6) {
+                    cellClass += ' border-bottom';
                 }
                 
                 var dateClass = isToday ? 'day-date today' : 'day-date';
