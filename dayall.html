@@ -93,7 +93,7 @@
 <body>
     <a href="index.html" class="back">← 返回主页</a>
     <a href="#" class="back" style="margin-left: 15px;" onclick="saveCalendarFile(); return false;">保存文件</a>
-    <a href="#" id="year2026" class="back" style="margin-left: 15px; color: #ff4444;" onclick="switchYear(2026); return false;">2026</a>
+    <a href="#" id="year2026" class="back" style="margin-left: 15px; color: #ffd700;" onclick="switchYear(2026); return false;">2026</a>
     <a href="#" id="year2027" class="back" style="margin-left: 4px;" onclick="switchYear(2027); return false;">2027</a>
     <a href="#" id="year2028" class="back" style="margin-left: 4px;" onclick="switchYear(2028); return false;">2028</a>
     <h1>全部日记(一整年)</h1>
@@ -194,9 +194,9 @@
 
         function switchYear(year) {
             currentYear = year;
-            document.getElementById('year2026').style.color = year === 2026 ? '#ff4444' : '#4a9eff';
-            document.getElementById('year2027').style.color = year === 2027 ? '#ff4444' : '#4a9eff';
-            document.getElementById('year2028').style.color = year === 2028 ? '#ff4444' : '#4a9eff';
+            document.getElementById('year2026').style.color = year === 2026 ? '#ffd700' : '#4a9eff';
+            document.getElementById('year2027').style.color = year === 2027 ? '#ffd700' : '#4a9eff';
+            document.getElementById('year2028').style.color = year === 2028 ? '#ffd700' : '#4a9eff';
             loadAllEvents(year);
         }
 
