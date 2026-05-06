@@ -54,6 +54,9 @@
         .day-date.today {
             color: #ff4444;
         }
+        .day-date.future {
+            color: #ff6b6b;
+        }
 
         .day-events {
             font-size: 8px;
@@ -166,11 +169,17 @@
                 var day = String(currentDate.getDate()).padStart(2, '0');
                 var today = new Date();
                 var isToday = currentDate.toDateString() === today.toDateString();
+                var isFuture = currentDate > today;
                 
                 var cellClass = 'day-cell';
                 if (isEmpty) cellClass += ' empty-day';
                 
-                var dateClass = isToday ? 'day-date today' : 'day-date';
+                var dateClass = 'day-date';
+                if (isToday) {
+                    dateClass += ' today';
+                } else if (isFuture) {
+                    dateClass += ' future';
+                }
                 html += '<div class="' + cellClass + '">';
                 html += '<div class="' + dateClass + '">' + month + '/' + day + '</div>';
                 html += '<div class="day-events">';
