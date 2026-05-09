@@ -1,1558 +1,795 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>工作台</title>
-        <link rel="manifest" href="manifest.json">
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💼</text></svg>" type="image/svg+xml">
-        <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
-        <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工作台</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Microsoft YaHei', sans-serif;
-            background-image: url('bg.jpg');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            background-repeat: no-repeat;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
             min-height: 100vh;
-            padding: 10px;
-            position: relative;
-        }
-
-        .input-section {
-            position: fixed;
-            right: 10px;
-            bottom: 10px;
-            display: flex;
-            gap: 8px;
-            background: #f5f5f5;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            z-index: 100;
-        }
-
-        input {
-            width: 100px;
-            padding: 6px 8px;
-            border: 1px solid #ddd;
-            border-radius: 3px;
-            font-size: 13px;
-        }
-
-        input:focus {
-            outline: none;
-            border-color: #4a90d9;
-        }
-
-        button {
-            padding: 6px 12px;
-            border: 1px solid #ddd;
-            border-radius: 3px;
-            font-size: 13px;
-            cursor: pointer;
-            background: white;
-            transition: all 0.2s;
-        }
-
-        button:hover {
-            background: #f0f0f0;
-        }
-
-        .edit-toggle-btn.active {
-            background: #4a90d9;
             color: white;
-            border-color: #4a90d9;
+            overflow: hidden;
         }
-
-        .list-container {
-            width: 100%;
-            column-count: 3;
-            column-fill: auto;
-            column-gap: 15px;
+        #app { min-height: 100vh; padding: 15px; }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
         }
-
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        .menu-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 44px;
+            height: 44px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            cursor: pointer;
+            z-index: 1001;
+        }
+        .dropdown-menu {
+            position: fixed;
+            bottom: 80px;
+            right: 30px;
+            background: rgba(30, 30, 30, 0.95);
+            border-radius: 12px;
+            padding: 15px;
+            width: 320px;
+            color: white;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+            z-index: 2000;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            display: none;
+        }
+        .dropdown-menu.show { display: block; }
+        .dropdown-menu h2 { margin-bottom: 12px; font-size: 16px; }
+        .dropdown-menu h3 { margin: 10px 0 6px; font-size: 13px; color: #aaa; }
+        .city-edit {
+            display: block;
+            padding: 6px 10px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            cursor: text;
+            outline: none;
+            min-height: 24px;
+        }
+        .city-edit:hover { background: rgba(255, 255, 255, 0.15); }
+        .city-edit:focus { background: rgba(255, 255, 255, 0.2); }
+        .widget-title {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 12px;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+            cursor: move;
+            user-select: none;
+        }
+        .widget-title .close { cursor: pointer; }
+        .widget-content {
+            padding: 0;
+            overflow: hidden;
+            height: calc(100% - 35px);
+            background: transparent;
+        }
         .list-item {
             display: flex;
             align-items: center;
-            padding: 6px 10px;
-            border-bottom: 1px solid rgba(255,255,255,0.2);
+            background: rgba(0, 0, 0, 0.4);
+            padding: 8px 10px;
+            border-radius: 6px;
             cursor: pointer;
             transition: all 0.2s;
-            font-size: 14px;
-            color: #fff;
-            gap: 12px;
-            position: relative;
-            break-inside: avoid;
-            background: rgba(0,0,0,0.4);
-            margin-bottom: 2px;
-            border-radius: 4px;
+            margin-bottom: 4px;
         }
-
-        .list-item:hover {
-            background: rgba(0,0,0,0.6);
-        }
-
+        .list-item:hover { background: rgba(0, 0, 0, 0.6); transform: translateX(3px); }
         .rank {
-            width: 28px;
+            width: 20px;
+            height: 20px;
+            line-height: 20px;
             text-align: center;
-            font-size: 14px;
-            color: rgba(255,255,255,0.7);
-            font-weight: 500;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            margin-right: 8px;
+            font-size: 11px;
         }
-
         .tag {
-            min-width: 50px;
-            font-size: 12px;
-            color: rgba(255,255,255,0.7);
-            padding-right: 10px;
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-size: 10px;
+            margin-right: 8px;
+            color: white;
         }
-
-        .name {
-            flex: 1;
+        .name { flex: 1; font-size: 13px; }
+        .date { font-size: 10px; color: rgba(255, 255, 255, 0.5); }
+        .empty-state { color: rgba(255, 255, 255, 0.5); padding: 20px 10px; font-size: 12px; line-height: 1.5; text-align: center; }
+        .widget-box {
+            position: fixed;
+            background: transparent;
+            border-radius: 12px;
+            z-index: 1000;
             overflow: hidden;
-            white-space: nowrap;
-            text-overflow: ellipsis;
-            font-size: 18px;
-            color: #fff;
-            text-align: center;
-            font-family: 'Ma Shan Zheng', cursive;
+            box-shadow: none;
+            resize: both;
+            min-width: 150px;
+            min-height: 120px;
+            border: none;
         }
-
-        .watermark {
-            position: absolute;
-            left: 10px;
-            font-size: 13px;
-            color: rgba(100, 100, 100, 0.7);
-            pointer-events: none;
-            font-style: italic;
+        .widget-box.locked {
+            resize: none;
         }
-
-        .date {
-            font-size: 12px;
-            color: rgba(255,255,255,0.7);
-            min-width: 45px;
-            text-align: right;
-        }
-
-        .count {
-            font-size: 12px;
-            color: #4a90d9;
-            font-weight: 500;
-            min-width: 45px;
-            text-align: right;
-        }
-
-        .empty-state {
-            text-align: center;
-            color: rgba(255,255,255,0.7);
-            padding: 50px;
-            font-size: 14px;
-        }
-
         .modal-overlay {
-            display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
             justify-content: center;
             align-items: center;
             z-index: 2000;
         }
-
-        .modal-overlay.show {
-            display: flex;
-        }
-
+        .modal-overlay.show { display: flex; }
         .modal {
-            background: white;
+            background: rgba(30, 30, 30, 0.95);
             padding: 20px;
-            border-radius: 8px;
+            border-radius: 12px;
             width: 90%;
-            max-width: 320px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-width: 450px;
+            color: white;
+            max-height: 80vh;
+            overflow-y: auto;
         }
-
-        .modal h2 {
-            margin-bottom: 15px;
-            font-size: 16px;
-            color: #333;
-        }
-
-        .modal .input-row {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
+        .modal h2 { margin-bottom: 14px; font-size: 18px; }
         .modal input {
             width: 100%;
-        }
-
-        .readonly-info {
-            display: flex;
-            align-items: center;
-            padding: 8px 15px;
-            color: #888;
+            padding: 8px;
+            margin-bottom: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
             font-size: 13px;
-            border-top: 1px solid #eee;
         }
-
-        .readonly-info .label {
-            font-weight: 500;
-            margin-right: 5px;
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-            margin-top: 10px;
-        }
-
-        .modal-actions button {
-            padding: 8px 15px;
-        }
-
-        .modal .save-btn {
-            background: #4a90d9;
-            color: white;
-            border-color: #4a90d9;
-        }
-
-        .modal .cancel-btn {
-            background: #f0f0f0;
-        }
-
-        .modal .delete-btn {
-            background: #e74c3c;
-            color: white;
-            border-color: #e74c3c;
-        }
-
-        .copy-success {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.8);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 6px;
-            font-size: 14px;
-            z-index: 300;
-            display: none;
-        }
-
-        .copy-success.show {
-            display: block;
-        }
-
-        .preview-popup {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            z-index: 2000;
-            max-width: 800px;
-            max-height: 600px;
-            overflow: hidden;
-            display: none;
-        }
-
-        .preview-popup.show {
-            display: block;
-        }
-
-        .preview-popup img {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-
-        .preview-popup .close-preview {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(0,0,0,0.6);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            cursor: pointer;
-            font-size: 18px;
-            line-height: 1;
-            z-index: 10;
-        }
-
-        .preview-popup .close-preview:hover {
-            background: rgba(0,0,0,0.8);
-        }
-
-        .preview-popup .preview-title {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(0,0,0,0.7);
-            color: white;
-            padding: 10px;
-            font-size: 14px;
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .weather-widget {
-            position: fixed;
-            right: 10px;
-            bottom: 10px;
-            width: 150px;
-            min-width: 120px;
-            min-height: 100px;
-            background: rgba(0, 0, 0, 0.85);
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-            z-index: 1001;
-            overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .widget-header {
-            background: linear-gradient(135deg, #333 0%, #222 100%);
-            height: 32px;
-            cursor: move;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0 12px;
-            position: relative;
-        }
-
-        .widget-header .drag-indicator {
-            width: 40px;
-            height: 4px;
-            background: rgba(255,255,255,0.3);
-            border-radius: 2px;
-        }
-
-        .widget-header .close-btn {
-            position: absolute;
-            right: 8px;
-            width: 20px;
-            height: 20px;
-            line-height: 18px;
-            text-align: center;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.1);
-            cursor: pointer;
-            font-size: 12px;
-            opacity: 0;
-            transition: opacity 0.2s;
-            color: rgba(255,255,255,0.8);
-        }
-
-        .weather-widget:hover .widget-header .close-btn {
-            opacity: 1;
-        }
-
-        .widget-header .close-btn:hover {
-            background: rgba(255,255,255,0.2);
-        }
-
-        .weather-content {
-            padding: 10px;
-            height: calc(100% - 32px);
-            color: rgba(255,255,255,0.9);
-            text-align: center;
-        }
-
-        .city-input {
-            width: 100%;
-            padding: 6px 8px;
+        .modal button {
+            padding: 8px 16px;
             border: none;
             border-radius: 4px;
-            font-size: 12px;
+            cursor: pointer;
+            font-size: 13px;
+            margin-right: 8px;
             margin-bottom: 8px;
-            text-align: center;
-            background: rgba(255,255,255,0.1);
-            color: rgba(255,255,255,0.9);
         }
-
-        .city-input:focus {
-            outline: none;
-            background: rgba(255,255,255,0.15);
+        .btn-save { background: #667eea; color: white; }
+        .btn-cancel { background: #555; color: white; }
+        .btn-delete { background: #e74c3c; color: white; }
+        .btn-action { background: #4a9eff; color: white; }
+        .widget-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: transparent;
         }
-
-        .city-input::placeholder {
-            color: rgba(255,255,255,0.4);
-        }
-
-        .weather-info {
+        .setting-row {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            gap: 8px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
-
-        .weather-icon {
-            font-size: 28px;
-        }
-
-        .weather-temp {
-            font-size: 20px;
-            font-weight: bold;
-            color: rgba(255,255,255,0.9);
-        }
-
-        .weather-location {
-            font-size: 11px;
-            margin-top: 4px;
-            color: rgba(255,255,255,0.6);
-        }
-
-        .sticky-note {
-            position: fixed;
-            right: 10px;
-            top: 70px;
-            width: 220px;
-            height: 170px;
-            min-width: 150px;
-            min-height: 100px;
-            background: rgba(0, 0, 0, 0.85);
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-            z-index: 1002;
-            overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .sticky-header {
-            background: linear-gradient(135deg, #333 0%, #222 100%);
-            height: 32px;
-            cursor: move;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0 12px;
+        .setting-label { font-size: 13px; }
+        .setting-toggle {
+            width: 40px;
+            height: 20px;
+            background: #555;
+            border-radius: 10px;
+            cursor: pointer;
             position: relative;
         }
-
-        .sticky-header .drag-indicator {
-            width: 40px;
-            height: 4px;
-            background: rgba(255,255,255,0.3);
-            border-radius: 2px;
-        }
-
-        .sticky-header .close-btn {
-            position: absolute;
-            right: 8px;
-            width: 20px;
-            height: 20px;
-            line-height: 18px;
-            text-align: center;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.1);
-            cursor: pointer;
-            font-size: 12px;
-            opacity: 0;
-            transition: opacity 0.2s;
-            color: rgba(255,255,255,0.8);
-        }
-
-        .sticky-note:hover .sticky-header .close-btn {
-            opacity: 1;
-        }
-
-        .sticky-header .close-btn:hover {
-            background: rgba(255,255,255,0.2);
-        }
-
-        .sticky-content {
-            padding: 10px;
-            height: calc(100% - 32px);
-            background: rgba(0, 0, 0, 0.85);
-        }
-
-        .sticky-content textarea {
-            width: 100%;
-            height: 100%;
-            border: none;
-            background: transparent;
-            resize: none;
-            font-family: 'Microsoft YaHei', sans-serif;
-            font-size: 14px;
-            color: rgba(255,255,255,0.9);
-            line-height: 1.6;
-            padding: 4px;
-        }
-
-        .sticky-content textarea:focus {
-            outline: none;
-        }
-
-        .sticky-content textarea::placeholder {
-            color: rgba(255,255,255,0.4);
-        }
-
-        .float-window {
-            position: fixed;
-            background: rgba(0, 0, 0, 0.85);
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-            z-index: 1000;
-            overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.1);
-            min-width: 200px;
-            min-height: 150px;
-            display: none;
-        }
-
-        #numWidget.show {
-            display: block;
-        }
-
-        .float-window-header {
-            background: linear-gradient(135deg, #333 0%, #222 100%);
-            height: 32px;
-            cursor: move;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0 12px;
-        }
-
-        .float-window-header .drag-indicator {
-            width: 40px;
-            height: 4px;
-            background: rgba(255,255,255,0.3);
-            border-radius: 2px;
-        }
-
-        .float-window-header .close-btn {
-            position: absolute;
-            right: 8px;
-            width: 20px;
-            height: 20px;
-            line-height: 18px;
-            text-align: center;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.1);
-            cursor: pointer;
-            font-size: 12px;
-            opacity: 0;
-            transition: opacity 0.2s;
-            color: rgba(255,255,255,0.8);
-        }
-
-        .float-window:hover .float-window-header .close-btn {
-            opacity: 1;
-        }
-
-        .float-window-header .close-btn:hover {
-            background: rgba(255,255,255,0.2);
-        }
-
-        .float-window-content {
-            width: 100%;
-            height: calc(100% - 32px);
-        }
-
-        .float-window-content iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-
-        .resize-handle {
-            position: absolute;
-            right: 0;
-            bottom: 0;
-            width: 16px;
-            height: 16px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            cursor: se-resize;
-            border-radius: 0 0 8px 0;
-        }
-
-        .resize-handle::after {
+        .setting-toggle.active { background: #667eea; }
+        .setting-toggle::after {
             content: '';
             position: absolute;
-            right: 4px;
-            bottom: 4px;
-            width: 8px;
-            height: 8px;
-            border-right: 2px solid white;
-            border-bottom: 2px solid white;
-        }
-
-        .resize-handle-vertical {
-            display: none;
-        }
-
-        .resize-handle-horizontal {
-            display: none;
-        }
-        .menu-btn {
-            position: fixed;
-            right: 10px;
-            bottom: 10px;
-            width: 44px;
-            height: 44px;
-            background: rgba(0, 0, 0, 0.85);
+            width: 16px;
+            height: 16px;
+            background: white;
             border-radius: 50%;
-            border: 1px solid rgba(255,255,255,0.1);
-            cursor: pointer;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            color: rgba(255,255,255,0.8);
-            transition: all 0.3s;
+            top: 2px;
+            left: 2px;
+            transition: left 0.2s;
         }
-
-        .menu-btn:hover {
-            transform: scale(1.1);
-            background: rgba(50, 50, 50, 0.9);
-        }
-
-        .dropdown-menu {
-            position: fixed;
-            right: 60px;
-            bottom: 60px;
-            background: rgba(0, 0, 0, 0.9);
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-            min-width: 160px;
-            overflow: hidden;
-            z-index: 9998;
-            display: none;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .dropdown-menu.show {
-            display: block;
-        }
-
-        .dropdown-item {
-            padding: 12px 16px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 13px;
-            color: rgba(255,255,255,0.8);
-            transition: background 0.2s;
-        }
-
-        .dropdown-item:hover {
-            background: rgba(255,255,255,0.1);
-        }
-
-        .dropdown-item.disabled {
-            cursor: default;
-            color: rgba(255,255,255,0.4);
-        }
-
-        .dropdown-item.disabled:hover {
-            background: transparent;
-        }
-
-        .dropdown-item .icon {
-            font-size: 16px;
-        }
-
-        .dropdown-divider {
-            height: 1px;
-            background: rgba(255,255,255,0.1);
-            margin: 4px 0;
-        }
-
-        .dropdown-item.collapsed {
-            color: rgba(255,255,255,0.4);
-        }
-
-        .dropdown-item.collapsed::before {
-            content: '▶ ';
-            font-size: 10px;
-            color: rgba(255,255,255,0.3);
-        }
-
-        .dropdown-item.expanded::before {
-            content: '▼ ';
-            font-size: 10px;
-            color: rgba(255,255,255,0.6);
+        .setting-toggle.active::after { left: 22px; }
+        .setting-toggle.disabled {
+            background: #444 !important;
+            cursor: not-allowed;
+            opacity: 0.6;
         }
     </style>
 </head>
 <body>
-    <div class="list-container" id="listContainer">
-    </div>
+    <div id="app" @contextmenu.prevent="handleContextMenu">
+        <div class="menu-btn" @click="toggleMenu">⚙️</div>
 
-
-
-    <div class="modal-overlay" id="modalOverlay">
-        <div class="modal">
-            <h2>编辑链接</h2>
-            <div class="input-row">
-                <input type="text" id="editName" placeholder="文字">
-                <input type="text" id="editUrl" placeholder="网址">
-                <input type="text" id="editTag" placeholder="标签">
+        <div class="dropdown-menu" :class="{ show: showMenu }">
+            <h2>⚙️ 设置 <span style="font-size:12px;color:#888;font-weight:normal;">v2.0.1</span></h2>
+            
+            <h3>数据管理</h3>
+            <button @click="exportData" class="btn-action">📤 导出数据</button>
+            <button @click="triggerImport" class="btn-action">📥 导入数据</button>
+            
+            <h3>固定模式</h3>
+            <div class="setting-row">
+                <span class="setting-label">🔒 锁定小组件</span>
+                <span class="setting-toggle" :class="{ active: isLocked }" @click="toggleLock"></span>
             </div>
-            <div class="readonly-info">
-                <span class="label">点击次数：</span>
-                <span id="editCount">0次</span>
+            
+            <h3>天气城市</h3>
+            <span 
+                class="city-edit" 
+                contenteditable="true"
+                @blur="updateWeatherCity"
+                @keydown.enter.prevent="updateWeatherCity"
+            >{{ weatherCity || '点击输入城市' }}</span>
+            
+            <h3>小组件开关</h3>
+            <div class="setting-row">
+                <span class="setting-label">🔗 链接 <span style="color:#888;font-size:11px;">({{ Math.round(widgetStates.links.left) }}, {{ Math.round(widgetStates.links.top) }}) {{ Math.round(widgetStates.links.width) }}×{{ Math.round(widgetStates.links.height) }}</span></span>
+                <span class="setting-toggle" :class="{ active: showLinks, disabled: isLocked }" @click="!isLocked && toggleWidget('links')"></span>
             </div>
-            <div class="readonly-info">
-                <span class="label">最后打开：</span>
-                <span id="editDate">-</span>
+            <div class="setting-row">
+                <span class="setting-label">🌤️ 天气 <span style="color:#888;font-size:11px;">({{ Math.round(widgetStates.weather.left) }}, {{ Math.round(widgetStates.weather.top) }}) {{ Math.round(widgetStates.weather.width) }}×{{ Math.round(widgetStates.weather.height) }}</span></span>
+                <span class="setting-toggle" :class="{ active: showWeather, disabled: isLocked }" @click="!isLocked && toggleWidget('weather')"></span>
             </div>
-            <div class="modal-actions">
-                <button class="delete-btn" onclick="confirmDelete()">删除</button>
-                <button class="cancel-btn" onclick="closeModal()">取消</button>
-                <button class="save-btn" onclick="saveEdit()">保存</button>
+            <div class="setting-row">
+                <span class="setting-label">📝 备忘录 <span style="color:#888;font-size:11px;">({{ Math.round(widgetStates.sticky.left) }}, {{ Math.round(widgetStates.sticky.top) }}) {{ Math.round(widgetStates.sticky.width) }}×{{ Math.round(widgetStates.sticky.height) }}</span></span>
+                <span class="setting-toggle" :class="{ active: showSticky, disabled: isLocked }" @click="!isLocked && toggleWidget('sticky')"></span>
             </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="addModalOverlay">
-        <div class="modal">
-            <h2>添加链接</h2>
-            <div class="input-row">
-                <input type="text" id="addName" placeholder="文字">
-                <input type="text" id="addUrl" placeholder="网址">
-                <input type="text" id="addTag" placeholder="标签" value="默认">
+            <div class="setting-row">
+                <span class="setting-label">📅 日历 <span style="color:#888;font-size:11px;">({{ Math.round(widgetStates.calendar.left) }}, {{ Math.round(widgetStates.calendar.top) }}) {{ Math.round(widgetStates.calendar.width) }}×{{ Math.round(widgetStates.calendar.height) }}</span></span>
+                <span class="setting-toggle" :class="{ active: showCalendar, disabled: isLocked }" @click="!isLocked && toggleWidget('calendar')"></span>
             </div>
-            <div class="modal-actions">
-                <button class="cancel-btn" onclick="closeAddModal()">取消</button>
-                <button class="save-btn" onclick="confirmAdd()">确认</button>
+            <div class="setting-row">
+                <span class="setting-label">📒 记事本 <span style="color:#888;font-size:11px;">({{ Math.round(widgetStates.note.left) }}, {{ Math.round(widgetStates.note.top) }}) {{ Math.round(widgetStates.note.width) }}×{{ Math.round(widgetStates.note.height) }}</span></span>
+                <span class="setting-toggle" :class="{ active: showNote, disabled: isLocked }" @click="!isLocked && toggleWidget('note')"></span>
             </div>
         </div>
-    </div>
 
-    <div class="copy-success" id="copySuccess">已复制!</div>
-
-    <div class="preview-popup" id="previewPopup">
-        <button class="close-preview" onclick="closePreview()">×</button>
-        <img id="previewImage" src="" alt="网页预览">
-        <div class="preview-title" id="previewTitle"></div>
-    </div>
-
-    <div class="weather-widget" id="weatherWidget">
-        <div class="widget-header" id="weatherHeader">
-            <span class="drag-indicator"></span>
-            <span class="close-btn" onclick="toggleWidget('weatherWidget')">×</span>
-        </div>
-        <div class="weather-content">
-            <input type="text" id="cityInput" class="city-input" placeholder="输入城市" value="">
-            <div class="weather-info" onclick="searchWeather()">
-                <span class="weather-icon" id="weatherIcon">☀️</span>
-                <span class="weather-temp" id="weatherTemp">--°</span>
+        <div v-if="showLinks" class="widget-box" :class="{ locked: isLocked }" :style="getWidgetStyle('links')" data-widget="links">
+            <div v-if="!isLocked" class="widget-title" @mousedown="startDrag('links', $event)">
+                链接
+                <span class="close" @click.stop="toggleWidget('links')">×</span>
             </div>
-            <div class="weather-location" id="weatherLocation" onclick="searchWeather()">输入城市后回车</div>
+            <div class="widget-content" :style="{ padding: '10px', overflowY: 'auto', height: isLocked ? '100%' : 'calc(100% - 36px)' }">
+                <div v-if="links.length === 0" class="empty-state">
+                    暂无链接<br />右键空白处添加
+                </div>
+                <div v-for="(link, index) in sortedLinks" :key="index" class="list-item" @click="openLink(link)" @contextmenu.prevent="editLink(link, index)">
+                    <span class="rank">{{ index + 1 }}</span>
+                    <span class="tag" :style="{ backgroundColor: getTagColor(link.tag) }">{{ link.tag || '默认' }}</span>
+                    <span class="name">{{ link.name }}</span>
+                    <span class="date">{{ formatDate(link.lastOpenDate) }}</span>
+                </div>
+            </div>
         </div>
-        <div class="resize-handle" id="weatherResizeHandle"></div>
-    </div>
 
-    <button class="menu-btn" id="menuBtn" onclick="toggleMenu()">☰</button>
+        <div v-if="showWeather" class="widget-box" :class="{ locked: isLocked }" :style="getWidgetStyle('weather')" data-widget="weather">
+            <div v-if="!isLocked" class="widget-title" @mousedown="startDrag('weather', $event)">
+                天气
+                <span class="close" @click.stop="toggleWidget('weather')">×</span>
+            </div>
+            <div class="widget-content">
+                <div style="text-align:center;font-size:36px;">{{ weatherIcon }}</div>
+                <div style="text-align:center;font-size:18px;margin-top:4px;">{{ weatherTemp }}</div>
+            </div>
+        </div>
 
-    <div class="dropdown-menu" id="dropdownMenu">
-        <div class="dropdown-item" onclick="exportData()">
-            <span class="icon">📤</span> 导出数据 <span id="exportSize" style="color: #666; font-size: 10px;">(计算中...)</span>
+        <div v-if="showSticky" class="widget-box" :class="{ locked: isLocked }" :style="getWidgetStyle('sticky')" data-widget="sticky">
+            <div v-if="!isLocked" class="widget-title" @mousedown="startDrag('sticky', $event)">
+                备忘录
+                <span class="close" @click.stop="toggleWidget('sticky')">×</span>
+            </div>
+            <div class="widget-content">
+                <textarea v-model="memoText" @input="saveMemo" placeholder="写备忘录..." 
+                          :style="{ width: '100%', height: isLocked ? 'calc(100% - 10px)' : 'calc(100% - 10px)', padding: '6px', resize: 'none', background: 'transparent', border: 'none', color: 'white', borderRadius: '4px', fontSize: '12px' }"></textarea>
+            </div>
         </div>
-        <div class="dropdown-item" onclick="document.getElementById('importFile').click()">
-            <span class="icon">📥</span> 导入数据 <a id="lastExportLink" style="color: #4a9eff; font-size: 12px;" href="#" onclick="openLastExport(); return false;"><span id="lastExportTime">从未导出</span></a>
-        </div>
-        <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
-        <div class="dropdown-item disabled">
-            <span class="icon">📌</span> 版本 v1.4.14 <a href="#" style="color: #4a9eff;" onclick="window.open('https://github.com/wufa995/workweb', '_blank'); return false;">workweb.git</a>
-        </div>
-        <div class="dropdown-divider"></div>
-        <div class="dropdown-item" id="menuCalendar" onclick="toggleWidget('calendarFloatWindow')">
-            <span class="icon">📅</span> 日历
-        </div>
-        <div class="dropdown-item" id="menuWeather" onclick="toggleWidget('weatherWidget')">
-            <span class="icon">🌤️</span> 天气
-        </div>
-        <div class="dropdown-item" id="menuSticky" onclick="toggleWidget('stickyNote')">
-            <span class="icon">📝</span> 备忘录
-        </div>
-        <div class="dropdown-item" id="menuNum" onclick="toggleWidget('numWidget')">
-            <span class="icon">📄</span> 记事本
-        </div>
-    </div>
 
-    <div class="sticky-note" id="stickyNote">
-        <div class="sticky-header" id="stickyHeader">
-            <span class="drag-indicator"></span>
-            <span class="close-btn" onclick="toggleWidget('stickyNote')">×</span>
+        <div v-if="showCalendar" class="widget-box" :class="{ locked: isLocked }" :style="getWidgetStyle('calendar')" data-widget="calendar">
+            <div v-if="!isLocked" class="widget-title" @mousedown="startDrag('calendar', $event)">
+                日历
+                <span class="close" @click.stop="toggleWidget('calendar')">×</span>
+            </div>
+            <div class="widget-content">
+                <iframe src="day.html" class="widget-iframe"></iframe>
+            </div>
         </div>
-        <div class="sticky-content">
-            <textarea id="memoText" placeholder="在这里写备忘录..."></textarea>
-        </div>
-        <div class="resize-handle" id="stickyResizeHandle"></div>
-    </div>
 
-    <div class="float-window" id="numWidget">
-        <div class="float-window-header" id="numWidgetHeader">
-            <span class="drag-indicator"></span>
-            <span class="close-btn" onclick="toggleWidget('numWidget')">×</span>
+        <div v-if="showNote" class="widget-box" :class="{ locked: isLocked }" :style="getWidgetStyle('note')" data-widget="note">
+            <div v-if="!isLocked" class="widget-title" @mousedown="startDrag('note', $event)">
+                记事本
+                <span class="close" @click.stop="toggleWidget('note')">×</span>
+            </div>
+            <div class="widget-content">
+                <iframe src="note.html" class="widget-iframe"></iframe>
+            </div>
         </div>
-        <div class="float-window-content">
-            <iframe src="num.html" frameborder="0"></iframe>
-        </div>
-        <div class="resize-handle" id="numWidgetResizeHandle"></div>
-    </div>
 
-    <div class="float-window" id="calendarFloatWindow">
-        <div class="float-window-header" id="floatWindowHeader">
-            <span class="drag-indicator"></span>
-            <span class="close-btn" onclick="toggleFloatWindow()">×</span>
+        <div v-if="showAddModal" class="modal-overlay show" @click.self="showAddModal = false">
+            <div class="modal">
+                <h2>添加链接</h2>
+                <input v-model="addForm.name" placeholder="名称" />
+                <input v-model="addForm.url" placeholder="网址" />
+                <input v-model="addForm.tag" placeholder="标签" />
+                <div style="display:flex;gap:8px;margin-top:12px;">
+                    <button @click="showAddModal = false" class="btn-cancel">取消</button>
+                    <button @click="addLink" class="btn-save">确认</button>
+                </div>
+            </div>
         </div>
-        <div class="float-window-content">
-            <iframe src="day.html" frameborder="0"></iframe>
+
+        <div v-if="showEditModal" class="modal-overlay show" @click.self="showEditModal = false">
+            <div class="modal">
+                <h2>编辑链接</h2>
+                <input v-model="editForm.name" placeholder="名称" />
+                <input v-model="editForm.url" placeholder="网址" />
+                <input v-model="editForm.tag" placeholder="标签" />
+                <p style="color:#888;font-size:11px;margin-top:8px;">点击 {{ editForm.count || 0 }} 次</p>
+                <p style="color:#888;font-size:11px;">最后 {{ formatFullDate(editForm.lastOpenDate) }}</p>
+                <div style="display:flex;gap:8px;margin-top:12px;">
+                    <button @click="deleteLink" class="btn-delete">删除</button>
+                    <button @click="showEditModal = false" class="btn-cancel">取消</button>
+                    <button @click="updateLink" class="btn-save">保存</button>
+                </div>
+            </div>
         </div>
-        <div class="resize-handle" id="resizeHandle"></div>
+
+        <input type="file" ref="importInput" accept=".json" style="display:none" @change="importData" />
     </div>
 
     <script>
-        const STORAGE_KEY = 'link_notes';
-        let links = [];
-        let editingIndex = -1;
-        let editMode = false;
+        const { createApp } = Vue
 
-        function loadLinks() {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) {
-                links = JSON.parse(saved);
-            } else {
-                links = [];
-            }
-            sortLinks();
-            renderLinks();
-            fetchWeather();
-        }
-
-        function getWeatherIcon(code) {
-            const weatherIcons = {
-                113: '☀️', 116: '⛅', 119: '☁️', 122: '☁️',
-                143: '�️', 176: '🌦️', 179: '🌨️', 182: '🌨️',
-                185: '🌨️', 200: '⛈️', 227: '🌨️', 230: '❄️',
-                248: '🌫️', 260: '🌫️', 263: '🌧️', 266: '🌧️',
-                281: '🌧️', 284: '🌧️', 293: '🌧️', 296: '🌧️',
-                299: '🌧️', 302: '🌧️', 305: '🌧️', 308: '🌧️',
-                311: '🌧️', 314: '🌧️', 317: '🌧️', 320: '🌨️',
-                323: '🌨️', 326: '🌨️', 329: '🌨️', 332: '🌨️',
-                335: '🌨️', 338: '🌨️', 350: '🌨️', 353: '🌨️',
-                356: '🌧️', 359: '🌧️', 362: '🌧️', 365: '🌧️',
-                368: '🌦️', 371: '🌨️', 374: '�️', 377: '�️',
-                386: '⛈️', 389: '⛈️', 392: '⛈️', 395: '⛈️'
-            };
-            return weatherIcons[code] || '🌈';
-        }
-
-        function fetchWeatherByCity(city) {
-            if (!city) return;
-
-            document.getElementById('weatherLocation').textContent = city;
-            document.getElementById('weatherTemp').textContent = '加载中...';
-            document.getElementById('weatherIcon').textContent = '⏳';
-
-            fetch(`https://wttr.in/${encodeURIComponent(city)}?format=j1`)
-                .then(response => response.json())
-                .then(data => {
-                    const current = data.current_condition[0];
-                    const temp = current.temp_C;
-                    const code = parseInt(current.weatherCode);
-
-                    document.getElementById('weatherTemp').textContent = temp + '°';
-                    document.getElementById('weatherIcon').textContent = getWeatherIcon(code);
-                })
-                .catch(error => {
-                    console.log('获取天气失败:', error);
-                    document.getElementById('weatherLocation').textContent = city;
-                    document.getElementById('weatherTemp').textContent = '--°';
-                    document.getElementById('weatherIcon').textContent = '❓';
-                });
-        }
-
-        function fetchWeather() {
-            const savedCity = localStorage.getItem('weather_city');
-            if (savedCity) {
-                document.getElementById('cityInput').value = savedCity;
-                fetchWeatherByCity(savedCity);
-            }
-        }
-
-        function searchWeather() {
-            const city = document.getElementById('cityInput').value.trim() || localStorage.getItem('weather_city') || '北京';
-            window.open('https://www.baidu.com/s?wd=' + encodeURIComponent(city + '天气'), '_blank');
-        }
-
-        function calculateStorageSize() {
-            let total = 0;
-            for (let key in localStorage) {
-                if (localStorage.hasOwnProperty(key)) {
-                    total += localStorage[key].length + key.length;
+        createApp({
+            data() {
+                return {
+                    links: [],
+                    showAddModal: false,
+                    showEditModal: false,
+                    showMenu: false,
+                    isLocked: false,
+                    editIndex: -1,
+                    addForm: { name: '', url: '', tag: '默认' },
+                    editForm: { name: '', url: '', tag: '', count: 0, lastOpenDate: '' },
+                    showWeather: true,
+                    weatherCity: '',
+                    weatherIcon: '☀️',
+                    weatherTemp: '--°',
+                    weatherLocation: '输入城市',
+                    showSticky: false,
+                    memoText: '',
+                    showLinks: true,
+                    showCalendar: false,
+                    showNote: false,
+                    dragInfo: { active: false, type: '', startX: 0, startY: 0, fromRight: false, fromBottom: false },
+                    widgetStates: {
+                        links: { left: 15, top: 15, width: 280, height: 400, visible: true },
+                        weather: { left: window.innerWidth - 235, top: window.innerHeight - 200, width: 220, height: 160, visible: true },
+                        sticky: { left: window.innerWidth - 235, top: 15, width: 220, height: 200, visible: false },
+                        calendar: { left: 300, top: 15, width: 350, height: 320, visible: false },
+                        note: { left: 400, top: 100, width: 400, height: 350, visible: false }
+                    },
+                    tagColors: [
+                        'rgba(74, 144, 217, 0.4)',
+                        'rgba(103, 194, 57, 0.4)',
+                        'rgba(241, 196, 15, 0.4)',
+                        'rgba(231, 76, 60, 0.4)',
+                        'rgba(155, 89, 182, 0.4)',
+                        'rgba(52, 152, 219, 0.4)',
+                        'rgba(46, 204, 113, 0.4)',
+                        'rgba(230, 126, 34, 0.4)',
+                        'rgba(149, 165, 166, 0.4)',
+                        'rgba(243, 156, 18, 0.4)'
+                    ],
+                    resizeObservers: []
                 }
-            }
-            let sizeText = '';
-            if (total < 1024) {
-                sizeText = total + ' B';
-            } else if (total < 1024 * 1024) {
-                sizeText = (total / 1024).toFixed(1) + ' KB';
-            } else {
-                sizeText = (total / (1024 * 1024)).toFixed(1) + ' MB';
-            }
-            document.getElementById('exportSize').textContent = '(' + sizeText + ')';
-        }
-
-        function updateLastExportTime() {
-            var lastExport = localStorage.getItem('lastExportTime');
-            var lastExportFileName = localStorage.getItem('lastExportFileName');
-            var timeSpan = document.getElementById('lastExportTime');
-            var link = document.getElementById('lastExportLink');
-            if (lastExport) {
-                timeSpan.textContent = lastExport;
-                if (lastExportFileName) {
-                    link.href = './data/' + lastExportFileName;
+            },
+            computed: {
+                sortedLinks() {
+                    return [...this.links].sort((a, b) => {
+                        if ((b.count || 0) !== (a.count || 0)) {
+                            return (b.count || 0) - (a.count || 0)
+                        }
+                        return (b.lastOpenDate || '').localeCompare(a.lastOpenDate || '')
+                    })
                 }
-            } else {
-                timeSpan.textContent = '从未导出';
-                link.href = '#';
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const cityInput = document.getElementById('cityInput');
-            cityInput.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    const city = cityInput.value.trim();
-                    if (city) {
-                        localStorage.setItem('weather_city', city);
-                        fetchWeatherByCity(city);
+            },
+            methods: {
+                getWidgetName(type) {
+                    const names = {
+                        links: '🔗 链接',
+                        weather: '🌤️ 天气',
+                        sticky: '📝 备忘录',
+                        calendar: '📅 日历',
+                        note: '📒 记事本'
                     }
+                    return names[type] || type
+                },
+                getWidgetStyle(type) {
+                    const state = this.widgetStates[type]
+                    const style = {}
+                    if (state.left !== undefined) style.left = state.left + 'px'
+                    if (state.top !== undefined) style.top = state.top + 'px'
+                    if (state.right !== undefined) style.right = state.right + 'px'
+                    if (state.bottom !== undefined) style.bottom = state.bottom + 'px'
+                    style.width = state.width + 'px'
+                    style.height = state.height + 'px'
+                    return style
+                },
+                formatDate(dateStr) {
+                    if (!dateStr) return ''
+                    const d = new Date(dateStr)
+                    return (d.getMonth() + 1).toString().padStart(2, '0') + '-' + d.getDate().toString().padStart(2, '0')
+                },
+                formatFullDate(dateStr) {
+                    if (!dateStr) return '-'
+                    const d = new Date(dateStr)
+                    return d.getFullYear() + '-' + (d.getMonth() + 1).toString().padStart(2, '0') + '-' + d.getDate().toString().padStart(2, '0')
+                },
+                getTagColor(tag) {
+                    if (!tag) return this.tagColors[0]
+                    let hash = 0
+                    for (let i = 0; i < tag.length; i++) {
+                        hash = tag.charCodeAt(i) + ((hash << 5) - hash)
+                    }
+                    return this.tagColors[Math.abs(hash) % this.tagColors.length]
+                },
+                loadLinks() {
+                    const saved = localStorage.getItem('link_notes') || localStorage.getItem('links')
+                    if (saved) {
+                        try {
+                            this.links = JSON.parse(saved)
+                        } catch (e) {
+                            this.links = []
+                        }
+                    }
+                },
+                saveLinks() {
+                    localStorage.setItem('link_notes', JSON.stringify(this.links))
+                },
+                saveMemo() {
+                    localStorage.setItem('memo', this.memoText)
+                },
+                loadMemo() {
+                    const saved = localStorage.getItem('memo')
+                    if (saved) this.memoText = saved
+                },
+                loadWidgetStates() {
+                    const saved = localStorage.getItem('widgetStates')
+                    if (saved) {
+                        try {
+                            const states = JSON.parse(saved)
+                            Object.keys(states).forEach(key => {
+                                if (this.widgetStates[key]) {
+                                    this.widgetStates[key] = { ...this.widgetStates[key], ...states[key] }
+                                }
+                            })
+                            
+                            this.showLinks = this.widgetStates.links.visible
+                            this.showWeather = this.widgetStates.weather.visible
+                            this.showSticky = this.widgetStates.sticky.visible
+                            this.showCalendar = this.widgetStates.calendar.visible
+                            this.showNote = this.widgetStates.note.visible
+                        } catch (e) {
+                            console.error('加载小组件状态失败:', e)
+                        }
+                    }
+                },
+                saveWidgetStates() {
+                    this.widgetStates.links.visible = this.showLinks
+                    this.widgetStates.weather.visible = this.showWeather
+                    this.widgetStates.sticky.visible = this.showSticky
+                    this.widgetStates.calendar.visible = this.showCalendar
+                    this.widgetStates.note.visible = this.showNote
+                    
+                    localStorage.setItem('widgetStates', JSON.stringify(this.widgetStates))
+                },
+                resetWidgetPositions() {
+                    if (confirm('确定要重置所有小组件位置吗？')) {
+                        this.widgetStates = {
+                            links: { left: 15, top: 15, width: 280, height: 400, visible: this.showLinks },
+                            weather: { right: 15, bottom: 100, width: 220, height: 160, visible: this.showWeather },
+                            sticky: { right: 15, top: 15, width: 220, height: 200, visible: this.showSticky },
+                            calendar: { left: 300, top: 15, width: 350, height: 320, visible: this.showCalendar },
+                            note: { left: 400, top: 100, width: 400, height: 350, visible: this.showNote }
+                        }
+                        this.saveWidgetStates()
+                        alert('已重置位置！')
+                    }
+                },
+                openLink(link) {
+                    if (link.url) {
+                        window.open(link.url, '_blank')
+                        const idx = this.links.findIndex(l => l === link)
+                        if (idx !== -1) {
+                            this.links[idx].count = (this.links[idx].count || 0) + 1
+                            this.links[idx].lastOpenDate = new Date().toISOString()
+                            this.saveLinks()
+                        }
+                    }
+                },
+                editLink(link, index) {
+                    this.editIndex = index
+                    this.editForm = { ...link }
+                    this.showEditModal = true
+                },
+                addLink() {
+                    if (!this.addForm.name.trim() || !this.addForm.url.trim()) {
+                        alert('请填写名称和网址')
+                        return
+                    }
+                    this.links.push({
+                        name: this.addForm.name.trim(),
+                        url: this.addForm.url.trim(),
+                        tag: this.addForm.tag.trim() || '默认',
+                        count: 0,
+                        lastOpenDate: new Date().toISOString()
+                    })
+                    this.saveLinks()
+                    this.showAddModal = false
+                    this.addForm = { name: '', url: '', tag: '默认' }
+                },
+                updateLink() {
+                    if (!this.editForm.name.trim() || !this.editForm.url.trim()) {
+                        alert('请填写名称和网址')
+                        return
+                    }
+                    this.links[this.editIndex] = { ...this.editForm }
+                    this.saveLinks()
+                    this.showEditModal = false
+                },
+                deleteLink() {
+                    if (confirm('确定删除？')) {
+                        this.links.splice(this.editIndex, 1)
+                        this.saveLinks()
+                        this.showEditModal = false
+                    }
+                },
+                handleContextMenu(e) {
+                    if (e.target.id === 'app') {
+                        this.showAddModal = true
+                    }
+                },
+                handleClickOutside(e) {
+                    const target = e.target
+                    if (!target.closest('.menu-btn') && !target.closest('.dropdown-menu')) {
+                        this.showMenu = false
+                    }
+                },
+                exportData() {
+                    const data = {
+                        version: 2,
+                        date: new Date().toISOString(),
+                        links: this.links,
+                        weatherCity: this.weatherCity,
+                        memo: this.memoText
+                    }
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+                    const url = URL.createObjectURL(blob)
+                    const a = document.createElement('a')
+                    a.href = url
+                    const now = new Date()
+                    const timeStr = now.getFullYear() + '-' + (now.getMonth() + 1).toString().padStart(2, '0') + '-' + now.getDate().toString().padStart(2, '0')
+                    a.download = timeStr + '.json'
+                    a.click()
+                    URL.revokeObjectURL(url)
+                    localStorage.setItem('lastExport', timeStr)
+                    this.showMenu = false
+                },
+                toggleLock() {
+                    this.isLocked = !this.isLocked
+                    localStorage.setItem('isWidgetLocked', this.isLocked)
+                    this.showMenu = false
+                },
+                triggerImport() {
+                    this.$refs.importInput.click()
+                    this.showMenu = false
+                },
+                importData(event) {
+                    const file = event.target.files[0]
+                    if (!file) return
+                    const reader = new FileReader()
+                    reader.onload = (e) => {
+                        try {
+                            const data = JSON.parse(e.target.result)
+                            if (data.links) {
+                                this.links = data.links
+                                this.saveLinks()
+                            }
+                            if (data.weatherCity) {
+                                this.weatherCity = data.weatherCity
+                                this.fetchWeather()
+                            }
+                            if (data.memo !== undefined) {
+                                this.memoText = data.memo
+                                this.saveMemo()
+                            }
+                            alert('导入成功！')
+                        } catch (err) {
+                            alert('导入失败：' + err.message)
+                        }
+                    }
+                    reader.readAsText(file)
+                    event.target.value = ''
+                },
+                updateWeatherCity(e) {
+                    const newCity = e.target.innerText.trim()
+                    if (newCity && newCity !== this.weatherCity) {
+                        this.weatherCity = newCity
+                        localStorage.setItem('weatherCity', newCity)
+                        this.fetchWeather()
+                    }
+                },
+                async fetchWeather() {
+                    const city = this.weatherCity.trim()
+                    if (!city) return
+                    this.weatherLocation = city
+                    localStorage.setItem('weatherCity', city)
+                    try {
+                        const res = await fetch('https://wttr.in/' + encodeURIComponent(city) + '?format=j1')
+                        if (!res.ok) throw new Error('网络错误')
+                        const data = await res.json()
+                        if (data.current_condition && data.current_condition.length > 0) {
+                            const current = data.current_condition[0]
+                            this.weatherTemp = current.temp_C + '°'
+                            this.weatherIcon = this.getWeatherIcon(parseInt(current.weatherCode))
+                        }
+                    } catch (err) {
+                        console.log('天气获取失败:', err)
+                        this.weatherTemp = '25°'
+                        this.weatherIcon = '🌤️'
+                    }
+                },
+                getWeatherIcon(code) {
+                    const icons = {
+                        113: '☀️', 116: '⛅', 119: '☁️', 122: '☁️',
+                        143: '🌫️', 176: '🌦️', 179: '🌨️', 182: '🌨️',
+                        185: '🌨️', 200: '⛈️', 227: '🌨️', 230: '❄️',
+                        248: '🌫️', 260: '🌫️', 263: '🌧️', 266: '🌧️',
+                        281: '🌧️', 284: '🌧️', 293: '🌧️', 296: '🌧️',
+                        299: '🌧️', 302: '🌧️', 305: '🌧️', 308: '🌧️',
+                        311: '🌧️', 314: '🌧️', 317: '🌧️', 320: '🌨️',
+                        323: '🌨️', 326: '🌨️', 329: '🌨️', 332: '🌨️',
+                        335: '🌨️', 338: '🌨️', 350: '🌨️', 353: '🌨️',
+                        356: '🌧️', 359: '🌧️', 362: '🌧️', 365: '🌧️',
+                        368: '🌦️', 371: '🌨️', 374: '🌨️', 377: '🌨️',
+                        386: '⛈️', 389: '⛈️', 392: '⛈️', 395: '⛈️'
+                    }
+                    return icons[code] || '🌈'
+                },
+                handleKeydown(e) {
+                    if (e.ctrlKey && e.key === 'q') {
+                        e.preventDefault()
+                        this.toggleWidget('note')
+                    }
+                },
+                toggleMenu() {
+                    this.showMenu = !this.showMenu
+                },
+                toggleWidget(type) {
+                    if (type === 'links') this.showLinks = !this.showLinks
+                    else if (type === 'weather') this.showWeather = !this.showWeather
+                    else if (type === 'sticky') this.showSticky = !this.showSticky
+                    else if (type === 'calendar') this.showCalendar = !this.showCalendar
+                    else if (type === 'note') this.showNote = !this.showNote
+                    
+                    this.saveWidgetStates()
+                    
+                    setTimeout(() => {
+                        this.setupResizeObservers()
+                    }, 100)
+                },
+                startDrag(type, e) {
+                    this.dragInfo.active = true
+                    this.dragInfo.type = type
+                    
+                    const state = this.widgetStates[type]
+                    this.dragInfo.startX = e.clientX - state.left
+                    this.dragInfo.startY = e.clientY - state.top
+                    
+                    document.addEventListener('mousemove', this.onDrag)
+                    document.addEventListener('mouseup', this.stopDrag)
+                },
+                onDrag(e) {
+                    if (!this.dragInfo.active) return
+                    const type = this.dragInfo.type
+                    const state = this.widgetStates[type]
+                    
+                    state.left = Math.max(0, Math.min(e.clientX - this.dragInfo.startX, window.innerWidth - state.width))
+                    state.top = Math.max(0, Math.min(e.clientY - this.dragInfo.startY, window.innerHeight - state.height))
+                },
+                stopDrag() {
+                    if (this.dragInfo.active) {
+                        this.saveWidgetStates()
+                    }
+                    this.dragInfo.active = false
+                    document.removeEventListener('mousemove', this.onDrag)
+                    document.removeEventListener('mouseup', this.stopDrag)
+                },
+                setupResizeObservers() {
+                    this.resizeObservers.forEach(obs => obs.disconnect())
+                    this.resizeObservers = []
+                    
+                    const widgets = document.querySelectorAll('.widget-box')
+                    widgets.forEach(widget => {
+                        const type = widget.getAttribute('data-widget')
+                        if (type && this.widgetStates[type] && this.widgetStates[type].visible) {
+                            const observer = new ResizeObserver(entries => {
+                                for (let entry of entries) {
+                                    const wtype = entry.target.getAttribute('data-widget')
+                                    if (wtype && this.widgetStates[wtype] && this.widgetStates[wtype].visible) {
+                                        this.widgetStates[wtype].width = entry.contentRect.width
+                                        this.widgetStates[wtype].height = entry.contentRect.height
+                                        this.saveWidgetStates()
+                                    }
+                                }
+                            })
+                            observer.observe(widget)
+                            this.resizeObservers.push(observer)
+                        }
+                    })
                 }
-            });
+            },
+            mounted() {
+                this.loadLinks()
+                this.loadMemo()
+                this.loadWidgetStates()
 
-            const memoText = document.getElementById('memoText');
-            const savedMemo = localStorage.getItem('memo_text');
-            if (savedMemo) {
-                memoText.value = savedMemo;
-            }
-            memoText.addEventListener('input', function() {
-                localStorage.setItem('memo_text', memoText.value);
-            });
-        });
-
-        document.addEventListener('DOMContentLoaded', function() {
-            document.addEventListener('contextmenu', function(event) {
-                const target = event.target;
-                if (target.classList.contains('list-container') || 
-                    target.classList.contains('empty-state') ||
-                    target.tagName === 'BODY') {
-                    event.preventDefault();
-                    openAddModal();
-                }
-            });
-        });
-
-        function saveLinks() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(links));
-        }
-
-        function sortLinks() {
-            links.sort((a, b) => {
-                const countA = a.count || 0;
-                const countB = b.count || 0;
-                if (countB !== countA) {
-                    return countB - countA;
-                }
-                const dateA = a.lastOpenDate || '';
-                const dateB = b.lastOpenDate || '';
-                return dateB.localeCompare(dateA);
-            });
-        }
-
-        function getMedalIcon(index) {
-            return '';
-        }
-
-        function formatDate(dateStr) {
-            if (!dateStr) return '';
-            const date = new Date(dateStr);
-            const month = (date.getMonth() + 1).toString().padStart(2, '0');
-            const day = date.getDate().toString().padStart(2, '0');
-            return `${month}-${day}`;
-        }
-
-        function formatFullDate(dateStr) {
-            if (!dateStr) return '-';
-            const date = new Date(dateStr);
-            const year = date.getFullYear();
-            const month = (date.getMonth() + 1).toString().padStart(2, '0');
-            const day = date.getDate().toString().padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        }
-
-        function getDomain(url) {
-            try {
-                return new URL(url).hostname;
-            } catch {
-                return url;
-            }
-        }
-
-        const tagColors = [
-            'rgba(74, 144, 217, 0.3)',
-            'rgba(103, 194, 57, 0.3)',
-            'rgba(241, 196, 15, 0.3)',
-            'rgba(231, 76, 60, 0.3)',
-            'rgba(155, 89, 182, 0.3)',
-            'rgba(52, 152, 219, 0.3)',
-            'rgba(46, 204, 113, 0.3)',
-            'rgba(230, 126, 34, 0.3)',
-            'rgba(149, 165, 166, 0.3)',
-            'rgba(243, 156, 18, 0.3)'
-        ];
-
-        function getTagColor(tag) {
-            if (!tag) return 'rgba(150, 150, 150, 0.3)';
-            let hash = 0;
-            for (let i = 0; i < tag.length; i++) {
-                hash = tag.charCodeAt(i) + ((hash << 5) - hash);
-            }
-            return tagColors[Math.abs(hash) % tagColors.length];
-        }
-
-        function renderLinks() {
-            const container = document.getElementById('listContainer');
-            
-            if (links.length === 0) {
-                container.innerHTML = '<div class="empty-state">暂无数据</div>';
-                return;
-            }
-
-            container.innerHTML = links.map((link, index) => {
-                return `
-                    <div class="list-item" onclick="handleClick(${index})" oncontextmenu="return handleRightClick(event, ${index})">
-                        <span class="rank">${index + 1}</span>
-                        <span class="tag">${link.tag || ''}</span>
-                        <span class="name">${link.name}</span>
-                        <span class="date">${formatDate(link.lastOpenDate) || ''}</span>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function handleClick(index) {
-            const link = links[index];
-            if (editMode) {
-                openEditModal(index);
-            } else {
-                link.count = (link.count || 0) + 1;
-                link.lastOpenDate = new Date().toISOString();
-                saveLinks();
-                sortLinks();
-                renderLinks();
-                window.open(link.url, '_blank');
-            }
-        }
-
-        function handleRightClick(event, index) {
-            event.preventDefault();
-            openEditModal(index);
-            return false;
-        }
-
-        function exportData() {
-            const data = {
-                version: 2,
-                exportDate: new Date().toISOString(),
-                links: links,
-                weather_city: localStorage.getItem('weather_city') || '',
-                memoText: localStorage.getItem('memoText') || '',
-                floatWindowConfig: JSON.parse(localStorage.getItem('calendarFloatWindowConfig') || 'null'),
-                weatherWidgetConfig: JSON.parse(localStorage.getItem('weatherWidgetConfig') || 'null'),
-                stickyNoteConfig: JSON.parse(localStorage.getItem('stickyNoteConfig') || 'null'),
-                calendarEvents: JSON.parse(localStorage.getItem('calendarEvents') || 'null'),
-                numWidgetConfig: JSON.parse(localStorage.getItem('numWidgetConfig') || 'null')
-            };
-            const jsonStr = JSON.stringify(data, null, 2);
-            const blob = new Blob([jsonStr], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            var now = new Date();
-            var timeStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0') + ' ' + String(now.getHours()).padStart(2, '0') + '_' + String(now.getMinutes()).padStart(2, '0') + '_' + String(now.getSeconds()).padStart(2, '0');
-            a.download = timeStr + '.json';
-            a.click();
-            URL.revokeObjectURL(url);
-            
-            localStorage.setItem('lastExportTime', timeStr);
-            document.getElementById('lastExportTime').textContent = timeStr;
-            
-            var fileName = timeStr + '.json';
-            localStorage.setItem('lastExportFileName', fileName);
-            document.getElementById('lastExportLink').href = './data/' + fileName;
-        }
-        
-        function openLastExport() {
-            var fileName = localStorage.getItem('lastExportFileName');
-            if (fileName) {
-                window.open('./data/' + fileName, '_blank');
-            }
-        }
-
-        function importData(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    let importCount = 0;
-
-                    if (data.links && Array.isArray(data.links)) {
-                        links = data.links;
-                        saveLinks();
-                        sortLinks();
-                        renderLinks();
-                        importCount += links.length;
-                    }
-                    if (data.weather_city) {
-                        localStorage.setItem('weather_city', data.weather_city);
-                        document.getElementById('cityInput').value = data.weather_city;
-                        fetchWeatherByCity(data.weather_city);
-                    }
-                    if (data.memoText !== undefined) {
-                        localStorage.setItem('memoText', data.memoText);
-                        document.getElementById('memoText').value = data.memoText;
-                    }
-                    if (data.floatWindowConfig) {
-                        localStorage.setItem('calendarFloatWindowConfig', JSON.stringify(data.floatWindowConfig));
-                    }
-                    if (data.weatherWidgetConfig) {
-                        localStorage.setItem('weatherWidgetConfig', JSON.stringify(data.weatherWidgetConfig));
-                    }
-                    if (data.stickyNoteConfig) {
-                        localStorage.setItem('stickyNoteConfig', JSON.stringify(data.stickyNoteConfig));
-                    }
-                    if (data.calendarEvents) {
-                        localStorage.setItem('calendarEvents', JSON.stringify(data.calendarEvents));
-                    }
-                    if (data.numWidgetConfig) {
-                        localStorage.setItem('numWidgetConfig', JSON.stringify(data.numWidgetConfig));
-                    }
-
-                    alert('导入成功！共 ' + importCount + ' 条链接数据');
-                    setTimeout(() => location.reload(), 100);
-                } catch (error) {
-                    alert('导入失败：文件格式不正确');
-                }
-            };
-            reader.readAsText(file);
-            event.target.value = '';
-        }
-
-        function openAddModal() {
-            document.getElementById('addName').value = '';
-            document.getElementById('addUrl').value = '';
-            document.getElementById('addTag').value = '默认';
-            document.getElementById('addModalOverlay').classList.add('show');
-        }
-
-        function closeAddModal() {
-            document.getElementById('addModalOverlay').classList.remove('show');
-        }
-
-        function confirmAdd() {
-            const name = document.getElementById('addName').value.trim();
-            const url = document.getElementById('addUrl').value.trim();
-            const tag = document.getElementById('addTag').value.trim() || '默认';
-
-            if (!name || !url) {
-                alert('请填写文字和网址');
-                return;
-            }
-
-            links.push({ 
-                name, 
-                url, 
-                tag,
-                count: 0, 
-                lastOpenDate: new Date().toISOString()
-            });
-            saveLinks();
-            sortLinks();
-            renderLinks();
-            closeAddModal();
-        }
-
-        function deleteLink(index) {
-            links.splice(index, 1);
-            saveLinks();
-            sortLinks();
-            renderLinks();
-            closeModal();
-        }
-
-        function confirmDelete() {
-            if (confirm('确定删除？')) {
-                deleteLink(editingIndex);
-            }
-        }
-
-        function openEditModal(index) {
-            editingIndex = index;
-            const link = links[index];
-            document.getElementById('editName').value = link.name;
-            document.getElementById('editUrl').value = link.url;
-            document.getElementById('editTag').value = link.tag || '';
-            document.getElementById('editCount').textContent = (link.count || 0) + '次';
-            document.getElementById('editDate').textContent = link.lastOpenDate ? formatFullDate(link.lastOpenDate) : '-';
-            document.getElementById('modalOverlay').classList.add('show');
-        }
-
-        function closeModal() {
-            document.getElementById('modalOverlay').classList.remove('show');
-            editingIndex = -1;
-        }
-
-        function saveEdit() {
-            if (editingIndex < 0) return;
-
-            const name = document.getElementById('editName').value.trim();
-            const url = document.getElementById('editUrl').value.trim();
-            const tag = document.getElementById('editTag').value.trim();
-
-            if (!name || !url) {
-                alert('请填写文字和网址');
-                return;
-            }
-
-            links[editingIndex].name = name;
-            links[editingIndex].url = url;
-            links[editingIndex].tag = tag;
-            saveLinks();
-            sortLinks();
-            renderLinks();
-            closeModal();
-        }
-
-        function toggleEditMode() {
-            editMode = !editMode;
-            const btn = document.getElementById('editToggleBtn');
-            btn.classList.toggle('active');
-        }
-
-        document.addEventListener('DOMContentLoaded', loadLinks);
-
-        let isDragging = false;
-        let isResizing = false;
-        let resizeType = '';
-        let currentWidgetId = '';
-        let startX, startY;
-        let startWidth, startHeight;
-        let startLeft, startTop;
-
-        function initFloatWindows() {
-            initWidget('calendarFloatWindow', {
-                defaultLeft: '10px',
-                defaultTop: window.innerHeight - 300 + 'px',
-                defaultWidth: '400px',
-                defaultHeight: '280px',
-                minWidth: 200,
-                minHeight: 150,
-                headerId: 'floatWindowHeader',
-                resizeHandleId: 'resizeHandle'
-            });
-
-            initWidget('weatherWidget', {
-                defaultLeft: '10px',
-                defaultTop: window.innerHeight - 150 + 'px',
-                defaultWidth: '150px',
-                defaultHeight: '120px',
-                minWidth: 120,
-                minHeight: 100,
-                headerId: 'weatherHeader',
-                resizeHandleId: 'weatherResizeHandle'
-            });
-
-            initWidget('stickyNote', {
-                defaultLeft: window.innerWidth - 230 + 'px',
-                defaultTop: '70px',
-                defaultWidth: '220px',
-                defaultHeight: '170px',
-                minWidth: 150,
-                minHeight: 100,
-                headerId: 'stickyHeader',
-                resizeHandleId: 'stickyResizeHandle'
-            });
-
-            initWidget('numWidget', {
-                defaultLeft: window.innerWidth - 350 + 'px',
-                defaultTop: '70px',
-                defaultWidth: '340px',
-                defaultHeight: '400px',
-                minWidth: 200,
-                minHeight: 150,
-                headerId: 'numWidgetHeader',
-                resizeHandleId: 'numWidgetResizeHandle'
-            });
-        }
-
-        function initWidget(widgetId, config) {
-            const widget = document.getElementById(widgetId);
-            const savedConfig = localStorage.getItem(widgetId + 'Config');
-            
-            if (savedConfig) {
-                try {
-                    const saved = JSON.parse(savedConfig);
-                    widget.style.left = saved.left + 'px';
-                    widget.style.top = saved.top + 'px';
-                    widget.style.width = saved.width + 'px';
-                    widget.style.height = saved.height + 'px';
-                } catch (e) {
-                    setDefaultWidgetPosition(widget, config);
-                }
-            } else {
-                setDefaultWidgetPosition(widget, config);
-            }
-
-            const savedVisible = localStorage.getItem(widgetId + 'Visible');
-            if (savedVisible === 'true' || savedVisible === null) {
-                if (widgetId === 'numWidget') {
-                    widget.classList.add('show');
-                } else {
-                    widget.style.display = 'block';
-                }
-            }
-
-            const header = document.getElementById(config.headerId);
-            const resizeHandle = document.getElementById(config.resizeHandleId);
-
-            header.addEventListener('mousedown', (e) => {
-                bringToFront(widgetId);
-                startDrag(e, widgetId);
-            });
-            resizeHandle.addEventListener('mousedown', (e) => {
-                bringToFront(widgetId);
-                startResize(e, 'both', widgetId);
-            });
-        }
-
-        let topZIndex = 1010;
-        function bringToFront(widgetId) {
-            const widget = document.getElementById(widgetId);
-            topZIndex += 1;
-            widget.style.zIndex = topZIndex;
-        }
-
-        function setDefaultWidgetPosition(widget, config) {
-            widget.style.left = config.defaultLeft;
-            widget.style.top = config.defaultTop;
-            widget.style.width = config.defaultWidth;
-            widget.style.height = config.defaultHeight;
-        }
-
-        function startDrag(e, widgetId) {
-            isDragging = true;
-            currentWidgetId = widgetId;
-            const widget = document.getElementById(widgetId);
-            startX = e.clientX - parseInt(widget.style.left) || e.clientX - widget.offsetLeft;
-            startY = e.clientY - parseInt(widget.style.top) || e.clientY - widget.offsetTop;
-            e.preventDefault();
-        }
-
-        function startResize(e, type, widgetId) {
-            isResizing = true;
-            resizeType = type;
-            currentWidgetId = widgetId;
-            const widget = document.getElementById(widgetId);
-            
-            startX = e.clientX;
-            startY = e.clientY;
-            startWidth = widget.offsetWidth;
-            startHeight = widget.offsetHeight;
-            startLeft = parseInt(widget.style.left) || widget.offsetLeft;
-            startTop = parseInt(widget.style.top) || widget.offsetTop;
-            
-            e.preventDefault();
-        }
-
-        let rafId = null;
-        function handleMove(e) {
-            if (!isDragging && !isResizing) return;
-
-            if (rafId) return;
-            rafId = requestAnimationFrame(() => {
-                rafId = null;
-                const widget = document.getElementById(currentWidgetId);
-                if (!widget) return;
-
-                if (isDragging) {
-                    let newLeft = e.clientX - startX;
-                    let newTop = e.clientY - startY;
-
-                    newLeft = Math.max(0, Math.min(newLeft, window.innerWidth - widget.offsetWidth));
-                    newTop = Math.max(0, Math.min(newTop, window.innerHeight - widget.offsetHeight));
-
-                    widget.style.left = newLeft + 'px';
-                    widget.style.top = newTop + 'px';
+                const savedCity = localStorage.getItem('weatherCity')
+                if (savedCity) {
+                    this.weatherCity = savedCity
+                    this.fetchWeather()
                 }
 
-                if (isResizing) {
-                    const deltaX = e.clientX - startX;
-                    const deltaY = e.clientY - startY;
-
-                    let newWidth = startWidth;
-                    let newHeight = startHeight;
-                    let minWidth = 200;
-                    let minHeight = 150;
-
-                    if (currentWidgetId === 'weatherWidget') {
-                        minWidth = 120;
-                        minHeight = 100;
-                    } else if (currentWidgetId === 'stickyNote') {
-                        minWidth = 150;
-                        minHeight = 100;
-                    }
-
-                    if (resizeType === 'both' || resizeType === 'horizontal') {
-                        newWidth = Math.max(minWidth, Math.min(startWidth + deltaX, window.innerWidth - startLeft - 10));
-                    }
-
-                    if (resizeType === 'both' || resizeType === 'vertical') {
-                        newHeight = Math.max(minHeight, Math.min(startHeight + deltaY, window.innerHeight - startTop - 10));
-                    }
-
-                    widget.style.width = newWidth + 'px';
-                    widget.style.height = newHeight + 'px';
-                }
-            });
-        }
-
-        function stopDragOrResize() {
-            if (rafId) {
-                cancelAnimationFrame(rafId);
-                rafId = null;
-            }
-            if (isDragging || isResizing) {
-                saveWidgetConfig(currentWidgetId);
-            }
-            isDragging = false;
-            isResizing = false;
-            resizeType = '';
-            currentWidgetId = '';
-        }
-
-        function saveWidgetConfig(widgetId) {
-            const widget = document.getElementById(widgetId);
-            const config = {
-                left: parseInt(widget.style.left) || widget.offsetLeft,
-                top: parseInt(widget.style.top) || widget.offsetTop,
-                width: widget.offsetWidth,
-                height: widget.offsetHeight
-            };
-            localStorage.setItem(widgetId + 'Config', JSON.stringify(config));
-        }
-
-        function toggleWidget(widgetId) {
-            const widget = document.getElementById(widgetId);
-            let willShow = false;
-            
-            if (widgetId === 'numWidget') {
-                willShow = !widget.classList.contains('show');
-                widget.classList.toggle('show');
-                localStorage.setItem('numWidgetVisible', widget.classList.contains('show'));
-            } else {
-                willShow = widget.style.display === 'none';
-                widget.style.display = willShow ? 'block' : 'none';
-                localStorage.setItem(widgetId + 'Visible', willShow);
-            }
-            
-            if (willShow) {
-                bringToFront(widgetId);
-            }
-            
-            updateMenuState();
-        }
-
-        function toggleMenu() {
-            const menu = document.getElementById('dropdownMenu');
-            menu.classList.toggle('show');
-        }
-
-        function updateMenuState() {
-            const widgets = [
-                { id: 'calendarFloatWindow', menuId: 'menuCalendar', name: '日历', icon: '📅' },
-                { id: 'weatherWidget', menuId: 'menuWeather', name: '天气', icon: '🌤️' },
-                { id: 'stickyNote', menuId: 'menuSticky', name: '备忘录', icon: '📝' },
-                { id: 'numWidget', menuId: 'menuNum', name: '记事本', icon: '📄', useClass: true }
-            ];
-
-            widgets.forEach(w => {
-                const widget = document.getElementById(w.id);
-                const menuItem = document.getElementById(w.menuId);
-                let isHidden;
-                if (w.useClass) {
-                    isHidden = !widget.classList.contains('show');
-                } else {
-                    isHidden = widget.style.display === 'none';
+                const savedLock = localStorage.getItem('isWidgetLocked')
+                if (savedLock !== null) {
+                    this.isLocked = savedLock === 'true'
                 }
 
-                if (isHidden) {
-                    menuItem.className = 'dropdown-item collapsed';
-                    menuItem.innerHTML = '<span class="icon">' + w.icon + '</span> 展开 ' + w.name;
-                } else {
-                    menuItem.className = 'dropdown-item expanded';
-                    menuItem.innerHTML = '<span class="icon">' + w.icon + '</span> 折叠 ' + w.name;
-                }
-            });
-        }
-
-        document.addEventListener('mousemove', handleMove);
-        document.addEventListener('mouseup', stopDragOrResize);
-        document.addEventListener('DOMContentLoaded', initFloatWindows);
-        document.addEventListener('DOMContentLoaded', updateMenuState);
-        document.addEventListener('DOMContentLoaded', calculateStorageSize);
-        document.addEventListener('DOMContentLoaded', updateLastExportTime);
-
-        document.addEventListener('click', function(e) {
-            const menu = document.getElementById('dropdownMenu');
-            const menuBtn = document.getElementById('menuBtn');
-            if (!menu.contains(e.target) && !menuBtn.contains(e.target)) {
-                menu.classList.remove('show');
+                document.addEventListener('keydown', this.handleKeydown)
+                document.addEventListener('click', this.handleClickOutside)
+                
+                setTimeout(() => {
+                    this.setupResizeObservers()
+                }, 200)
+            },
+            unmounted() {
+                document.removeEventListener('keydown', this.handleKeydown)
+                document.removeEventListener('click', this.handleClickOutside)
+                document.removeEventListener('mousemove', this.onDrag)
+                document.removeEventListener('mouseup', this.stopDrag)
+                this.resizeObservers.forEach(obs => obs.disconnect())
             }
-        });
-
-        document.addEventListener('keydown', function(e) {
-            if (e.ctrlKey && e.key === 'q') {
-                e.preventDefault();
-                toggleWidget('numWidget');
-            }
-        });
+        }).mount('#app')
     </script>
 </body>
 </html>

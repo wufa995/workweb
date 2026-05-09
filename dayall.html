@@ -4,24 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>所有日程</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📅</text></svg>">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Microsoft YaHei', sans-serif;
-            background-color: #1a1a1a;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
             color: #fff;
             padding: 8px;
             min-height: 100vh;
             overflow-x: auto;
         }
-        h1 {
-            display: none;
-        }
+        h1 { display: none; }
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 200px);
@@ -51,13 +45,8 @@
             color: #4a9eff;
             flex-shrink: 0;
         }
-        .day-date.today {
-            color: #ffd700;
-        }
-        .day-date.future {
-            color: #ff6b6b;
-        }
-
+        .day-date.today { color: #ffd700; }
+        .day-date.future { color: #ff6b6b; }
         .day-events {
             font-size: 8px;
             white-space: nowrap;
@@ -74,189 +63,199 @@
             background-color: #1f1f1f;
             color: #333;
         }
-        .empty-day .day-date {
-            color: #333;
-        }
+        .empty-day .day-date { color: #333; }
         .back {
             display: inline-block;
             margin-bottom: 6px;
             color: #4a9eff;
             text-decoration: none;
             font-size: 12px;
+            padding-right: 15px;
         }
-        .back:hover {
-            text-decoration: underline;
-        }
+        .back:hover { text-decoration: underline; }
     </style>
-    
 </head>
 <body>
-    <a href="index.html" class="back">← 返回主页</a>
-    <a href="#" class="back" style="margin-left: 15px;" onclick="saveCalendarFile(); return false;">保存文件</a>
-    <a href="#" id="year2026" class="back" style="margin-left: 15px; color: #ffd700;" onclick="switchYear(2026); return false;">2026</a>
-    <a href="#" id="year2027" class="back" style="margin-left: 4px;" onclick="switchYear(2027); return false;">2027</a>
-    <a href="#" id="year2028" class="back" style="margin-left: 4px;" onclick="switchYear(2028); return false;">2028</a>
-    <h1>全部日记(一整年)</h1>
-    
-    <div class="week-header">
-        <div class="week-day-name">一</div>
-        <div class="week-day-name">二</div>
-        <div class="week-day-name">三</div>
-        <div class="week-day-name">四</div>
-        <div class="week-day-name">五</div>
-        <div class="week-day-name">六</div>
-        <div class="week-day-name">日</div>
+    <div id="app">
+        <a href="index.html" class="back">← 返回主页</a>
+        <a href="#" class="back" @click.prevent="saveCalendarFile">保存文件</a>
+        <a v-for="year in years" :key="year" :href="'#'" class="back"
+           :style="{ color: currentYear === year ? '#ffd700' : '#4a9eff', marginLeft: year === years[0] ? '15px' : '4px' }"
+           @click.prevent="switchYear(year)">{{ year }}</a>
+        <h1>全部日记(一整年)</h1>
+
+        <div class="week-header">
+            <div class="week-day-name">一</div>
+            <div class="week-day-name">二</div>
+            <div class="week-day-name">三</div>
+            <div class="week-day-name">四</div>
+            <div class="week-day-name">五</div>
+            <div class="week-day-name">六</div>
+            <div class="week-day-name">日</div>
+        </div>
+
+        <div class="calendar-grid">
+            <div v-for="(day, index) in calendarDays" :key="index"
+                 :class="['day-cell', { 'empty-day': day.events.length === 0 }]">
+                <div :class="['day-date', { 'today': day.isToday, 'future': day.isFuture }]">
+                    {{ day.month }}/{{ day.day }}
+                </div>
+                <div class="day-events">
+                    <span v-for="(event, eIndex) in day.events" :key="eIndex" class="event-tag">
+                        {{ event }}
+                    </span>
+                </div>
+            </div>
+        </div>
     </div>
-    
-    <div class="calendar-grid" id="calendarGrid"></div>
 
     <script>
-        var currentYear = 2026;
+        const { createApp } = Vue
 
-        function formatDate(dateStr) {
-            var d = new Date(dateStr);
-            return d.getFullYear() + '-' +
-                String(d.getMonth() + 1).padStart(2, '0') + '-' +
-                String(d.getDate()).padStart(2, '0');
-        }
+        createApp({
+            data() {
+                return {
+                    currentYear: 2026,
+                    years: [2026, 2027, 2028],
+                    events: {}
+                }
+            },
+            computed: {
+                calendarDays() {
+                    const today = new Date()
+                    const startDate = new Date(this.currentYear, 0, 1)
+                    const dayOfWeek = startDate.getDay()
+                    const offset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
+                    startDate.setDate(startDate.getDate() + offset)
 
-        function loadAllEvents(year) {
-            var grid = document.getElementById('calendarGrid');
-            var stored = localStorage.getItem('calendarEvents');
-            var dateEvents = {};
+                    const days = []
+                    const endDate = new Date(this.currentYear, 11, 31)
+                    const currentDate = new Date(startDate)
 
-            if (stored) {
-                var events = JSON.parse(stored);
-                for (var i = 0; i < events.length; i++) {
-                    if (events[i].date) {
-                        var date = events[i].date;
-                        if (!dateEvents[date]) {
-                            dateEvents[date] = [];
-                        }
-                        dateEvents[date].push(events[i].content);
-                    } else if (events[i].startDate) {
-                        var startDate = new Date(events[i].startDate);
-                        var endDate = new Date(events[i].endDate);
-                        var current = new Date(startDate);
+                    while (currentDate <= endDate) {
+                        const dateStr = this.formatDate(currentDate)
+                        const dayEvents = this.events[dateStr] || []
+                        const month = String(currentDate.getMonth() + 1).padStart(2, '0')
+                        const day = String(currentDate.getDate()).padStart(2, '0')
+                        const isToday = currentDate.toDateString() === today.toDateString()
+                        const isFuture = currentDate > today
 
-                        while (current <= endDate) {
-                            var date = formatDate(current);
-                            if (!dateEvents[date]) {
-                                dateEvents[date] = [];
+                        days.push({
+                            dateStr,
+                            month,
+                            day,
+                            isToday,
+                            isFuture,
+                            events: dayEvents
+                        })
+
+                        currentDate.setDate(currentDate.getDate() + 1)
+                    }
+
+                    return days
+                }
+            },
+            methods: {
+                formatDate(date) {
+                    const year = date.getFullYear()
+                    const month = String(date.getMonth() + 1).padStart(2, '0')
+                    const day = String(date.getDate()).padStart(2, '0')
+                    return `${year}-${month}-${day}`
+                },
+                loadAllEvents() {
+                    this.events = {}
+                    const stored = localStorage.getItem('calendarEvents')
+                    
+                    if (stored) {
+                        const loadedEvents = JSON.parse(stored)
+                        for (const event of loadedEvents) {
+                            if (event.date) {
+                                if (!this.events[event.date]) {
+                                    this.events[event.date] = []
+                                }
+                                this.events[event.date].push(event.content)
+                            } else if (event.startDate) {
+                                const startDate = new Date(event.startDate)
+                                const endDate = new Date(event.endDate)
+                                const current = new Date(startDate)
+
+                                while (current <= endDate) {
+                                    const date = this.formatDate(current)
+                                    if (!this.events[date]) {
+                                        this.events[date] = []
+                                    }
+                                    this.events[date].push(event.content)
+                                    current.setDate(current.getDate() + 1)
+                                }
                             }
-                            dateEvents[date].push(events[i].content);
-                            current.setDate(current.getDate() + 1);
                         }
                     }
-                }
-            }
+                },
+                switchYear(year) {
+                    this.currentYear = year
+                },
+                saveCalendarFile() {
+                    const dateEvents = {}
+                    const stored = localStorage.getItem('calendarEvents')
 
-            var startDate = new Date(year, 0, 1);
-            var dayOfWeek = startDate.getDay();
-            var offset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-            startDate.setDate(startDate.getDate() + offset);
-
-            var html = '';
-            var currentDate = new Date(startDate);
-            var endDate = new Date(year, 11, 31);
-
-            while (currentDate <= endDate) {
-                var dateStr = formatDate(currentDate);
-                var events = dateEvents[dateStr] || [];
-                var isEmpty = events.length === 0;
-
-                var month = String(currentDate.getMonth() + 1).padStart(2, '0');
-                var day = String(currentDate.getDate()).padStart(2, '0');
-                var today = new Date();
-                var isToday = currentDate.toDateString() === today.toDateString();
-                var isFuture = currentDate > today;
-                
-                var cellClass = 'day-cell';
-                if (isEmpty) cellClass += ' empty-day';
-                
-                var dateClass = 'day-date';
-                if (isToday) {
-                    dateClass += ' today';
-                } else if (isFuture) {
-                    dateClass += ' future';
-                }
-                html += '<div class="' + cellClass + '">';
-                html += '<div class="' + dateClass + '">' + month + '/' + day + '</div>';
-                html += '<div class="day-events">';
-                html += events.map(function(e) { return '<span class="event-tag">' + e + '</span>'; }).join(' ');
-                html += '</div></div>';
-
-                currentDate.setDate(currentDate.getDate() + 1);
-            }
-
-            grid.innerHTML = html;
-        }
-
-        function switchYear(year) {
-            currentYear = year;
-            document.getElementById('year2026').style.color = year === 2026 ? '#ffd700' : '#4a9eff';
-            document.getElementById('year2027').style.color = year === 2027 ? '#ffd700' : '#4a9eff';
-            document.getElementById('year2028').style.color = year === 2028 ? '#ffd700' : '#4a9eff';
-            loadAllEvents(year);
-        }
-
-        loadAllEvents(currentYear);
-
-        function saveCalendarFile() {
-            var stored = localStorage.getItem('calendarEvents');
-            var dateEvents = {};
-            
-            if (stored) {
-                var events = JSON.parse(stored);
-                for (var i = 0; i < events.length; i++) {
-                    if (events[i].date) {
-                        var date = events[i].date;
-                        if (!dateEvents[date]) dateEvents[date] = [];
-                        dateEvents[date].push(events[i].content);
-                    } else if (events[i].startDate) {
-                        var start = new Date(events[i].startDate);
-                        var end = new Date(events[i].endDate);
-                        var current = new Date(start);
-                        while (current <= end) {
-                            var date = formatDate(current);
-                            if (!dateEvents[date]) dateEvents[date] = [];
-                            dateEvents[date].push(events[i].content);
-                            current.setDate(current.getDate() + 1);
+                    if (stored) {
+                        const loadedEvents = JSON.parse(stored)
+                        for (const event of loadedEvents) {
+                            if (event.date) {
+                                if (!dateEvents[event.date]) dateEvents[event.date] = []
+                                dateEvents[event.date].push(event.content)
+                            } else if (event.startDate) {
+                                const start = new Date(event.startDate)
+                                const end = new Date(event.endDate)
+                                const current = new Date(start)
+                                while (current <= end) {
+                                    const date = this.formatDate(current)
+                                    if (!dateEvents[date]) dateEvents[date] = []
+                                    dateEvents[date].push(event.content)
+                                    current.setDate(current.getDate() + 1)
+                                }
+                            }
                         }
                     }
-                }
-            }
-            
-            var lines = [];
-            var sortedDates = Object.keys(dateEvents).sort();
-            
-            for (var i = 0; i < sortedDates.length; i++) {
-                var dateStr = sortedDates[i];
-                if (dateStr.startsWith(currentYear + '-')) {
-                    var events = dateEvents[dateStr];
-                    if (events.length > 0) {
-                        var dateParts = dateStr.split('-');
-                        var formattedDate = dateParts[0] + '年' + dateParts[1] + '月' + dateParts[2] + '日';
-                        var line = formattedDate + '：' + events.join('，');
-                        lines.push(line);
+
+                    const lines = []
+                    const sortedDates = Object.keys(dateEvents).sort()
+
+                    for (const dateStr of sortedDates) {
+                        if (dateStr.startsWith(this.currentYear + '-')) {
+                            const events = dateEvents[dateStr]
+                            if (events.length > 0) {
+                                const dateParts = dateStr.split('-')
+                                const formattedDate = `${dateParts[0]}年${dateParts[1]}月${dateParts[2]}日`
+                                lines.push(`${formattedDate}：${events.join('，')}`)
+                            }
+                        }
                     }
+
+                    const content = lines.join('\n')
+                    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+                    const link = document.createElement('a')
+
+                    const today = new Date()
+                    const todayStr = `${today.getFullYear()}年${String(today.getMonth() + 1).padStart(2, '0')}月${String(today.getDate()).padStart(2, '0')}日`
+                    link.download = `${this.currentYear}一整年的日记（${todayStr}）.txt`
+
+                    const timeStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')} ${String(today.getHours()).padStart(2, '0')}:${String(today.getMinutes()).padStart(2, '0')}:${String(today.getSeconds()).padStart(2, '0')}`
+                    localStorage.setItem('lastExportTime', timeStr)
+
+                    link.href = URL.createObjectURL(blob)
+                    link.click()
+                }
+            },
+            mounted() {
+                this.loadAllEvents()
+            },
+            watch: {
+                currentYear() {
+                    this.loadAllEvents()
                 }
             }
-            
-            var content = lines.join('\n');
-            var blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-            var link = document.createElement('a');
-            
-            var today = new Date();
-            var todayStr = today.getFullYear() + '年' + String(today.getMonth() + 1).padStart(2, '0') + '月' + String(today.getDate()).padStart(2, '0') + '日';
-            link.download = currentYear + '一整年的日记（' + todayStr + '）.txt';
-            
-            var timeStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0') + ' ' + String(today.getHours()).padStart(2, '0') + ':' + String(today.getMinutes()).padStart(2, '0') + ':' + String(today.getSeconds()).padStart(2, '0');
-            localStorage.setItem('lastExportTime', timeStr);
-            
-            link.href = URL.createObjectURL(blob);
-            link.click();
-        }
+        }).mount('#app')
     </script>
 </body>
 </html>
